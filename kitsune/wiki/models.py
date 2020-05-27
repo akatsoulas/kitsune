@@ -13,7 +13,7 @@ from django.core.urlresolvers import resolve
 from django.db import IntegrityError, models
 from django.db.models import Q
 from django.http import Http404
-from django.utils.encoding import smart_str
+from django.utils.encoding import smart_bytes
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _lazy
 from pyquery import PyQuery
@@ -1305,4 +1305,4 @@ def doc_html_cache_key(locale, slug):
     """Returns the cache key for the document html."""
     cache_key = DOC_HTML_CACHE_KEY.format(
         locale=locale, slug=slug)
-    return hashlib.sha1(smart_str(cache_key)).hexdigest()
+    return hashlib.sha1(smart_bytes(cache_key)).hexdigest()
