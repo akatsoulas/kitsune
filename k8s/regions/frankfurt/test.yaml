@@ -22,17 +22,18 @@ kubernetes:
     liveness: False
     # app specific values
     apps:
-        cron:
-            command: "./bin/run-cron.sh"
-            deployment_name: "sumo-test-cron"
-            labels:
-                type: "cron"
         celery:
             command: "./bin/run-celery-worker.sh"
             deployment_name: "sumo-test-celery"
             replicas: 1
             labels:
                 type: "celery"
+        celery-beat:
+            command: "./bin/run-celery-beat-worker.sh"
+            deployment_name: "sumo-test-celery-beat"
+            replicas: 1
+            labels:
+                type: "celery-beat"
         web:
             command: "./bin/run-prod.sh"
             deployment_name: "sumo-test-web"
