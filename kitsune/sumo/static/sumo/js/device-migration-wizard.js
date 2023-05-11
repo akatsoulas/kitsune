@@ -4,10 +4,13 @@ import SwitchingDevicesWizardManager from "sumo/js/switching-devices-wizard-mana
 import "sumo/js/form-wizard";
 
 document.addEventListener("DOMContentLoaded", function () {
-  new SwitchingDevicesWizardManager(document.querySelector("#switching-devices-wizard"))
+  new SwitchingDevicesWizardManager(document.querySelector("#switching-devices-wizard"));
   kbTabsInit();
 });
 
+
+// This function initializes the tabs on the switching-devices page
+// and adds click event listener
 function kbTabsInit() {
   document.getElementById("kb-tab-all").style.display = "block";
   let tabItems = document.querySelectorAll('[data-event-category="link click"]');
@@ -18,6 +21,8 @@ function kbTabsInit() {
   });
 }
 
+// This function toggles the visibility of the tab content based on 
+// clicked tab 
 function toggleTabContent(ev) {
   let tabContent = document.getElementsByClassName("topic-list");
   [].forEach.call(tabContent, (el) => {
