@@ -25,10 +25,12 @@ class TestFacetHelpers(TestCase):
         self.sync_m = TopicFactory(product=self.mobile, slug="sync")
 
         # Set up documents.
-        doc1 = DocumentFactory(products=[self.desktop], topics=[self.general_d, self.bookmarks_d])
-        doc1_revision = ApprovedRevisionFactory(document=doc1, is_ready_for_localization=True)
+        self.doc1 = DocumentFactory(
+            products=[self.desktop], topics=[self.general_d, self.bookmarks_d]
+        )
+        doc1_revision = ApprovedRevisionFactory(document=self.doc1, is_ready_for_localization=True)
 
-        doc1_localized = DocumentFactory(locale="de", products=[], topics=[], parent=doc1)
+        doc1_localized = DocumentFactory(locale="de", products=[], topics=[], parent=self.doc1)
         ApprovedRevisionFactory(document=doc1_localized, based_on=doc1_revision)
 
         doc2 = DocumentFactory(
@@ -97,6 +99,11 @@ class TestFacetHelpers(TestCase):
             locale="en-US", topics=[self.general_d, self.sync_d]
         )
         self.assertEqual(len(general_sync_documents), 0)
+
+        bookmarks_documents_exclude_doc1 = _documents_for(
+            locale="en-US", topics=[self.bookmarks_d], current_document=self.doc1
+        )
+        self.assertEqual(len(bookmarks_documents_exclude_doc1), 1)
 
     def test_documents_for_fallback(self):
         """Verify the fallback in documents_for."""
