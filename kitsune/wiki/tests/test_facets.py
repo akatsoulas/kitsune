@@ -30,14 +30,16 @@ class TestFacetHelpers(TestCase):
         )
         doc1_revision = ApprovedRevisionFactory(document=self.doc1, is_ready_for_localization=True)
 
-        doc1_localized = DocumentFactory(locale="de", products=[], topics=[], parent=self.doc1)
-        ApprovedRevisionFactory(document=doc1_localized, based_on=doc1_revision)
+        self.doc1_localized = DocumentFactory(
+            locale="de", products=[], topics=[], parent=self.doc1
+        )
+        ApprovedRevisionFactory(document=self.doc1_localized, based_on=doc1_revision)
 
-        doc2 = DocumentFactory(
+        self.doc2 = DocumentFactory(
             products=[self.desktop, self.mobile],
             topics=[self.bookmarks_d, self.bookmarks_m, self.sync_d, self.sync_m],
         )
-        ApprovedRevisionFactory(document=doc2)
+        ApprovedRevisionFactory(document=self.doc2)
 
         # An archived article shouldn't show up
         doc3 = DocumentFactory(
@@ -68,42 +70,69 @@ class TestFacetHelpers(TestCase):
 
     def test_topics_for_products(self):
         """Verify topics_for() returns topics for passed products."""
-        desktop_topics = topics_for(product=self.desktop)
-        self.assertEqual(len(desktop_topics), 3)
+        with self.subTest("topics_for-desktop"):
+            desktop_topics = topics_for(product=self.desktop)
+            self.assertEqual(len(desktop_topics), 3)
 
-        mobile_topics = topics_for(product=self.mobile)
-        self.assertEqual(len(mobile_topics), 2)
+        with self.subTest("topics_for-mobile"):
+            mobile_topics = topics_for(product=self.mobile)
+            self.assertEqual(len(mobile_topics), 2)
 
     def test_documents_for(self):
         """Verify documents_for() returns documents for passed topics."""
-        general_documents = _documents_for(locale="en-US", topics=[self.general_d])
-        self.assertEqual(len(general_documents), 1)
+        with self.subTest("documents_for-general"):
+            general_documents = _documents_for(locale="en-US", topics=[self.general_d])
+            self.assertEqual(len(general_documents), 1)
 
-        bookmarks_documents = _documents_for(locale="en-US", topics=[self.bookmarks_d])
-        self.assertEqual(len(bookmarks_documents), 2)
+        with self.subTest("documents_for-bookmarks"):
+            bookmarks_documents = _documents_for(locale="en-US", topics=[self.bookmarks_d])
+            self.assertEqual(len(bookmarks_documents), 2)
 
-        sync_documents = _documents_for(locale="en-US", topics=[self.sync_d])
-        self.assertEqual(len(sync_documents), 1)
+        with self.subTest("documents_for-sync"):
+            sync_documents = _documents_for(locale="en-US", topics=[self.sync_d])
+            self.assertEqual(len(sync_documents), 1)
 
-        general_bookmarks_documents = _documents_for(
-            locale="en-US", topics=[self.general_d, self.bookmarks_d]
-        )
-        self.assertEqual(len(general_bookmarks_documents), 1)
+        with self.subTest("documents_for-general_bookmarks"):
+            general_bookmarks_documents = _documents_for(
+                locale="en-US", topics=[self.general_d, self.bookmarks_d]
+            )
+            self.assertEqual(len(general_bookmarks_documents), 1)
 
-        general_bookmarks_documents_localized = _documents_for(
-            locale="de", topics=[self.general_d, self.bookmarks_d]
-        )
-        self.assertEqual(len(general_bookmarks_documents_localized), 1)
+        with self.subTest("documents_for-general_bookmarks-de"):
+            general_bookmarks_documents_localized = _documents_for(
+                locale="de", topics=[self.general_d, self.bookmarks_d]
+            )
+            self.assertEqual(len(general_bookmarks_documents_localized), 1)
 
-        general_sync_documents = _documents_for(
-            locale="en-US", topics=[self.general_d, self.sync_d]
-        )
-        self.assertEqual(len(general_sync_documents), 0)
+        with self.subTest("documents_for-general_sync"):
+            general_sync_documents = _documents_for(
+                locale="en-US", topics=[self.general_d, self.sync_d]
+            )
+            self.assertEqual(len(general_sync_documents), 0)
 
-        bookmarks_documents_exclude_doc1 = _documents_for(
-            locale="en-US", topics=[self.bookmarks_d], current_document=self.doc1
-        )
-        self.assertEqual(len(bookmarks_documents_exclude_doc1), 1)
+        with self.subTest("documents_for-bookmarks_exclude_doc1"):
+            bookmarks_documents_exclude_doc1, fallbacks = documents_for(
+                locale="en-US", topics=[self.bookmarks_d], current_document=self.doc1
+            )
+            self.assertEqual(len(bookmarks_documents_exclude_doc1), 1)
+            self.assertEqual(bookmarks_documents_exclude_doc1[0]["id"], self.doc2.id)
+            self.assertIs(fallbacks, None)
+
+        with self.subTest("documents_for-bookmarks_exclude_doc2-de"):
+            bookmarks_documents_exclude_doc2, fallbacks = documents_for(
+                locale="de", topics=[self.bookmarks_d], current_document=self.doc2
+            )
+            self.assertEqual(len(bookmarks_documents_exclude_doc2), 1)
+            self.assertEqual(bookmarks_documents_exclude_doc2[0]["id"], self.doc1_localized.id)
+            self.assertEqual(fallbacks, [])
+
+        with self.subTest("documents_for-bookmarks_exclude_doc1_localized-de"):
+            bookmarks_documents_exclude_doc1_localized, fallbacks = documents_for(
+                locale="de", topics=[self.bookmarks_d], current_document=self.doc1_localized
+            )
+            self.assertEqual(len(bookmarks_documents_exclude_doc1_localized), 0)
+            self.assertEqual(len(fallbacks), 1)
+            self.assertEqual(fallbacks[0]["id"], self.doc2.id)
 
     def test_documents_for_fallback(self):
         """Verify the fallback in documents_for."""
