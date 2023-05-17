@@ -134,6 +134,30 @@ class TestFacetHelpers(TestCase):
             self.assertEqual(len(fallbacks), 1)
             self.assertEqual(fallbacks[0]["id"], self.doc2.id)
 
+    def test_documents_for_caching_1(self):
+        """
+        Ensure that when we exclude a document, it doesn't affect the result when
+        we don't. Note that the cache is automatically cleared between tests.
+        """
+        docs, _ = documents_for(
+            locale="en-US", topics=[self.bookmarks_d], current_document=self.doc1
+        )
+        self.assertEqual(len(docs), 1)
+        docs, _ = documents_for(locale="en-US", topics=[self.bookmarks_d])
+        self.assertEqual(len(docs), 2)
+
+    def test_documents_for_caching_2(self):
+        """
+        Ensure that when we don't exclude a document, it doesn't affect the result
+        when we do. Note that the cache is automatically cleared between tests.
+        """
+        docs, _ = documents_for(locale="en-US", topics=[self.bookmarks_d])
+        self.assertEqual(len(docs), 2)
+        docs, _ = documents_for(
+            locale="en-US", topics=[self.bookmarks_d], current_document=self.doc1
+        )
+        self.assertEqual(len(docs), 1)
+
     def test_documents_for_fallback(self):
         """Verify the fallback in documents_for."""
         general_bookmarks_documents, fallback = documents_for(
