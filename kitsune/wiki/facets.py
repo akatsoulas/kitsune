@@ -52,11 +52,7 @@ def documents_for(locale, topics=None, products=None, current_document=None):
         url
         document_parent_id
     """
-    documents = _documents_for(locale, topics, products)
-
-    if excluding_current_document := isinstance(current_document, Document):
-        if documents and current_document.locale == locale:
-            documents = [d for d in documents if d["id"] != current_document.id]
+    documents = _documents_for(locale, topics, products, current_document)
 
     # For locales that aren't en-US, get the en-US documents
     # to fill in for untranslated articles.
@@ -68,11 +64,8 @@ def documents_for(locale, topics=None, products=None, current_document=None):
             locale=settings.WIKI_DEFAULT_LANGUAGE,
             products=products,
             topics=topics,
+            current_document=current_document,
         )
-        if excluding_current_document:
-            l10n_document_ids.append(
-                current_document.parent.id if current_document.parent else current_document.id
-            )
         fallback_documents = [d for d in en_documents if d["id"] not in l10n_document_ids]
     else:
         fallback_documents = None
@@ -80,13 +73,16 @@ def documents_for(locale, topics=None, products=None, current_document=None):
     return documents, fallback_documents
 
 
-def _documents_for(locale, topics=None, products=None):
+def _documents_for(locale, topics=None, products=None, current_document=None):
     """Returns a list of articles that apply to passed in locale, topics and products."""
     # First try to get the results from the cache
     cache_key = _cache_key(locale, topics, products)
     documents_cache_key = f"documents_for:{cache_key}"
     documents = cache.get(documents_cache_key)
+    exclude_current_document = isinstance(current_document, Document)
     if documents is not None:
+        if exclude_current_document:
+            documents = [d for d in documents if d["id"] != current_document.id]
         return documents
 
     qs = Document.objects.filter(
@@ -95,6 +91,8 @@ def _documents_for(locale, topics=None, products=None):
         current_revision__isnull=False,
         category__in=settings.IA_DEFAULT_CATEGORIES,
     )
+    if exclude_current_document:
+        qs = qs.exclude(id=current_document.id)
     # speed up query by removing any ordering, since we're doing it in python:
     qs = qs.select_related("current_revision", "parent").order_by()
 
@@ -104,6 +102,7 @@ def _documents_for(locale, topics=None, products=None):
     for product in products or []:
         # we need to filter against parent products for localized articles
         qs = qs.filter(Q(products=product) | Q(parent__products=product))
+    qs = qs.distinct()
 
     votes_cache_key = f"votes_for:{cache_key}"
     votes_dict = cache.get(votes_cache_key)
