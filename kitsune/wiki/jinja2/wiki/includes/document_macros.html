@@ -265,12 +265,7 @@
 
 <section class="showfor" id="showfor-panel">
   <script type="application/json" class="showfor-data">
-    {
-      {
-        showfor_data(products)
-      }
-    }
-
+  {{ showfor_data(products) }}
   </script>
 
   <h3 class="{% if close_button %}sumo-card-heading{% else %}sidebar-subheading force-top-margin{% endif %}">
@@ -500,6 +495,7 @@
                 d="M15.5,0.621320312 C16.3284271,-0.207106783 17.6715729,-0.207106769 18.5,0.621320344 C19.3284271,1.44974746 19.3284271,2.79289318 18.5,3.62132031 L11,11.1213203 L7,12.1213203 L8,8.12132031 L15.5,0.621320312 Z">
               </path>
             </g>
+          </g>
         </svg>
         {{ _('Still need help?') }}
       </h3>
