@@ -1,6 +1,9 @@
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _lazy
+from wagtail.admin.panels import FieldPanel
+from wagtail.models import PreviewableMixin
+from wagtail.snippets.models import register_snippet
 
 from kitsune.products.managers import NonArchivedManager, ProductManager
 from kitsune.sumo.fields import ImagePlusField
@@ -11,7 +14,8 @@ from kitsune.sumo.utils import webpack_static
 HOT_TOPIC_SLUG = "hot"
 
 
-class Product(ModelBase):
+@register_snippet
+class Product(ModelBase, PreviewableMixin):
     title = models.CharField(max_length=255, db_index=True)
     codename = models.CharField(max_length=255, blank=True, default="")
     slug = models.SlugField()
@@ -84,6 +88,22 @@ class Product(ModelBase):
         if self.is_archived:
             self.topics.update(is_archived=True)
         super().save(*args, **kwargs)
+
+    # Wagtail Product additions
+    panels = [
+        FieldPanel("title"),
+        FieldPanel("codename"),
+        FieldPanel("slug"),
+        FieldPanel("description"),
+        FieldPanel("image"),
+        FieldPanel("image_alternate"),
+        FieldPanel("display_order"),
+        FieldPanel("visible"),
+        FieldPanel("platforms"),
+    ]
+
+    def get_preview_template(self, request, mode_name):
+        return "products/product_card_preview.html"
 
 
 # Note: This is the "new" Topic class

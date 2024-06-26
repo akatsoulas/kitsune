@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set ga_content_group = "home" %}
+
+{% block hidden_search_masthead %}
+{% endblock %}
+
+{% block masthead %}
+
+        <li>        
+        {% for block in page.body %}
+          {% if block.block_type == 'search' %}
+            {{ block.render() }}
+          {% endif %}
+        {% endfor %}
+        </li>
+
+{% endblock %}
+
+
+{% block contentwrap %}
+<div id="main-content">
+  <section class="mzp-l-content sumo-page-section--inner">
+    <div class="text-center-to-left-on-large">
+      <h2 class="sumo-page-subheading">{{ _('Get Help') }}</h2>
+      <p class="sumo-page-intro">{{ _('Pick your product') }}</p>
+    </div>
+    <div class="sumo-card-grid is-product-wrap">
+      <div class="scroll-wrap">
+        {% for block in page.body %}
+          {% if block.block_type == 'product_snippet' %}
+            {{ block.render() }}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+    <section class="mzp-l-content sumo-page-section--inner">
+      <div class="text-center-to-left-on-large">
+        <h2 class="sumo-page-subheading">{{ _('Featured Articles') }}</h2>
+      </div>
+        {% for block in page.body %}
+          {% if block.block_type == 'featured_articles' %}
+            {{ block.render() }}
+          {% endif %}
+        {% endfor %}
+    </section>
+
+  <section class="mzp-l-content sumo-page-section--inner">
+        {% for block in page.body %}
+          {% if block.block_type == 'cta' %}
+            {{ block.render() }}
+          {% endif %}
+        {% endfor %}
+  </section>
+</div>
+{% endblock %}
+
+{% block outer_side %}
+{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}

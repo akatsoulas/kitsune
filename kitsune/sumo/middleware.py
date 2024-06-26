@@ -12,6 +12,7 @@ from django.core.exceptions import MiddlewareNotUsed
 from django.core.validators import ValidationError, validate_ipv4_address
 from django.db.utils import DatabaseError
 from django.http import (
+    Http404,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponsePermanentRedirect,
@@ -30,6 +31,7 @@ from kitsune.sumo.i18n import get_language_from_user, normalize_language, normal
 from kitsune.sumo.views import handle403
 from kitsune.users.auth import FXAAuthBackend
 
+from wagtail.models import Page, Site
 
 class SetRemoteAddrFromForwardedFor:
     def __init__(self, get_response):
@@ -359,3 +361,58 @@ class InAAQMiddleware(MiddlewareMixin):
             ):
                 request.session["aaq_context"] = {}
         return None
+
+class WagtailFallbackMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if response.status_code == 404:
+            try:
+                # Attempt to find the Wagtail site for the request
+                site = Site.find_for_request(request)
+                if not site:
+                    return response  # No Wagtail site found, return original response
+
+                # Correctly split the path and remove any leading slash
+                path_components = [component for component in request.path.split('/') if component]
+                # Find the page for the given path
+                page, args, kwargs = site.root_page.specific.route(request, path_components)
+
+                # Serve the page and check the response
+                wagtail_response = page.serve(request, *args, **kwargs)
+                if wagtail_response.status_code != 404:
+                    return wagtail_response  # Return the Wagtail response if not a 404
+
+            except Http404:
+                pass  # Let the request fall through to the default Django URL resolver
+
+        return response  # Return the original response if not handled by Wagtail
+
+from django.urls import URLResolver, Resolver404
+from wagtail.urls import urlpatterns
+from kitsune.sumo.i18n import LocalePrefixPattern
+
+def wagtail_fallback_middleware(get_response):
+    def middleware(request):
+        """
+        Must be the last middleware
+        Checks if the page exists in Wagtail; if so, ensures
+        the page is served by Wagtail.
+        """
+        try:
+            # Ensure the LocalePrefixPattern is used to resolve the URL
+            resolver = URLResolver(LocalePrefixPattern(), urlpatterns)
+            func, args, kwargs = resolver.resolve(request.path_info)
+        except Resolver404:
+            pass
+        else:
+            try:
+                return func(request, *args, **kwargs)
+            except Http404:
+                pass
+
+        return get_response(request)
+
+    return middleware

@@ -16,6 +16,7 @@ from kitsune.sumo import views as sumo_views
 from kitsune.sumo.decorators import csp_allow_inline_scripts_and_styles
 from kitsune.sumo.i18n import i18n_patterns
 
+from wagtail import urls as wagtail_urls
 # Note: This must come before importing admin because it patches the
 # admin.
 from kitsune.sumo.monkeypatch import patch
@@ -49,11 +50,6 @@ urlpatterns = i18n_patterns(
     path("", include("kitsune.users.urls")),
     path("locales", sumo_views.locales, name="sumo.locales"),
     re_path(r"^windows7-support(?:\\/)?$", RedirectView.as_view(url="/home/?as=u")),
-    re_path(
-        rf"wagtail/{serve_pattern.lstrip('^')}",
-        waffle_flag("wagtail_experiments")(wagtail_serve),
-        name="wagtail_serve",
-    ),
 )
 
 if settings.OIDC_ENABLE:
