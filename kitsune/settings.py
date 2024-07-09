@@ -516,7 +516,7 @@ MIDDLEWARE: tuple[str, ...] = (
     "csp.middleware.CSPMiddleware",
     "dockerflow.django.middleware.DockerflowMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
-    "kitsune.sumo.middleware.wagtail_fallback_middleware",
+    #"kitsune.sumo.middleware.wagtail_fallback_middleware",
 )
 
 # SecurityMiddleware settings

@@ -105,15 +105,12 @@ class StructuralPage(Page):
     def serve(self, request):
         pass
 
-class SumoBasePage(Page):
-
-
-    def serve(self, request):
-        try:
-            wagtail_serve(request, path)
-        except Http404:
-            return None
-
-    def route(self, request, path_components):
-        pass    
+#class SumoBasePage(Page):
+#    def serve(self, request):
+#        try:
+#            wagtail_serve(request, path)
+#        except Http404:
+#            return None
+#    def route(self, request, path_components):
+#        pass    
         
