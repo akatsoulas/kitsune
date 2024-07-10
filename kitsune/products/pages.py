@@ -1,10 +1,8 @@
-from django.http import Http404
-
 from wagtail import blocks
-from wagtail.fields import StreamField
 from wagtail.admin.panels import FieldPanel
+from wagtail.contrib.routable_page.models import RoutablePageMixin
+from wagtail.fields import StreamField
 from wagtail.models import Page
-from wagtail.contrib.routable_page.models import RoutablePageMixin, path, re_path
 from wagtail.snippets.blocks import SnippetChooserBlock
 
 
@@ -100,17 +98,17 @@ class StructuralPage(Page):
         FieldPanel("title"),
         FieldPanel("slug"),
     ]
-    promote_panels = []
+    # promote_panels = []
 
     def serve(self, request):
         pass
 
-#class SumoBasePage(Page):
+
+# class SumoBasePage(Page):
 #    def serve(self, request):
 #        try:
 #            wagtail_serve(request, path)
 #        except Http404:
 #            return None
 #    def route(self, request, path_components):
-#        pass    
-        
+#        pass
