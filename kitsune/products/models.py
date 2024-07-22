@@ -169,7 +169,7 @@ class Topic(ModelBase):
             return reverse(
                 "products.documents",
                 kwargs={
-                    "product_slug": self.product.slug,
+                    # "product_slug": self.product.slug,
                     "topic_slug": self.slug,
                 },
             )
@@ -178,7 +178,7 @@ class Topic(ModelBase):
             return reverse(
                 "products.subtopics",
                 kwargs={
-                    "product_slug": self.product.slug,
+                    # "product_slug": self.product.slug,
                     "topic_slug": self.parent.slug,
                     "subtopic_slug": self.slug,
                 },

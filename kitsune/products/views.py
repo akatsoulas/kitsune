@@ -118,7 +118,7 @@ def document_listing(request, topic_slug, product_slug=None, subtopic_slug=None)
     topic_list = []
     topic_kw = {
         "slug": topic_slug,
-        "parent__isnull": True,
+        # "parent__isnull": True,
         "visible": True,
     }
 
@@ -132,7 +132,9 @@ def document_listing(request, topic_slug, product_slug=None, subtopic_slug=None)
         )
         topic_list = Topic.active.filter(id__in=Subquery(topic_subquery))
         doc_kw["topics"] = topics
-        topic = get_object_or_404(topic_list, slug=topic_slug)
+        # topic = get_object_or_404(topic_list, slug=topic_slug)
+        topic = topics[0]
+
     else:
         topic = get_object_or_404(Topic, slug=topic_slug, product=product, parent__isnull=True)
         topics = topics_for(request.user, product=product, parent=None)
