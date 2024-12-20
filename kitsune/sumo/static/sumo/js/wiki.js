@@ -627,66 +627,80 @@ import collapsibleAccordionInit from "sumo/js/protocol-details-init";
 
   function initRevisionList() {
     var $form = $('#revision-list form.filter');
-    
+
     if (!$form.length) {
-        return;
+      return;
     }
 
-    // Retrieve and safely parse form data from sessionStorage
+    // Retrieve form data from sessionStorage, excluding pagination parameters
     let formData = {};
     const savedFormData = sessionStorage.getItem('revision-list-filter');
-    
+
     if (savedFormData) {
-        try {
-            formData = JSON.parse(savedFormData); // Try parsing JSON
-        } catch (e) {
-            formData = {}; // Default to an empty object if parsing fails
-            sessionStorage.removeItem('revision-list-filter'); // Clear corrupted data
-        }
+      try {
+        formData = JSON.parse(savedFormData);
+      } catch (e) {
+        formData = {};
+        sessionStorage.removeItem('revision-list-filter');
+      }
     }
 
-    // Populate form fields with saved data from sessionStorage
+    // Populate form fields with saved data
     for (let [name, value] of Object.entries(formData)) {
-        const field = $form.find(`[name="${name}"]`);
-        if (field.length) {
-            field.val(value);
-        }
+      const field = $form.find(`[name="${name}"]`);
+      if (field.length) {
+        field.val(value);
+      }
     }
 
-    updateRevisionList(); // Initial update
-    
-    // Update the revision list when the form changes
-    function updateRevisionList(query) {
-        if (query === undefined) {
-            query = $form.serialize();
-        }
-        if (query.charAt(0) !== '?') {
-            query = '?' + query;
-        }
-        var url = $form.attr('action') + query;
+    // Only update if there are saved filters
+    if (Object.keys(formData).length > 0) {
+      updateRevisionList();
+    }
 
-        $('#revisions-fragment').css('opacity', 0);
-        $.get(url + '&fragment=1', function (data) {
-            $('.loading').hide();
-            $('#revisions-fragment').html(data).css('opacity', 1);
-        });
+    function updateRevisionList(query) {
+      if (query === undefined) {
+        query = $form.serialize();
+      }
+
+      // Preserve any existing page parameter from the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const pageParam = urlParams.get('page');
+      if (pageParam && !query.includes('page=')) {
+        query += `&page=${pageParam}`;
+      }
+
+      if (query.charAt(0) !== '?') {
+        query = '?' + query;
+      }
+      var url = $form.attr('action') + query;
+
+      $('#revisions-fragment').css('opacity', 0);
+      $.get(url + '&fragment=1', function (data) {
+        $('.loading').hide();
+        $('#revisions-fragment').html(data).css('opacity', 1);
+
+        // Update URL without triggering page reload
+        const newUrl = window.location.pathname + query;
+        window.history.pushState({}, '', newUrl);
+      });
     }
 
     // Trigger update and save changes to localStorage on input change
     var timeout;
     $form.on('input change', 'input, select', function () {
-        $('.loading').show();
-        clearTimeout(timeout);
-        timeout = setTimeout(function () {
-            updateRevisionList();
-        }, 200);
+      $('.loading').show();
+      clearTimeout(timeout);
+      timeout = setTimeout(function () {
+        updateRevisionList();
+      }, 200);
 
-        // Collect form data and save it as JSON in sessionStorage
-        const currentData = $form.serializeArray().reduce((obj, item) => {
-            obj[item.name] = item.value;
-            return obj;
-        }, {});
-        sessionStorage.setItem('revision-list-filter', JSON.stringify(currentData)); // Save as JSON
+      // Collect form data and save it as JSON in sessionStorage
+      const currentData = $form.serializeArray().reduce((obj, item) => {
+        obj[item.name] = item.value;
+        return obj;
+      }, {});
+      sessionStorage.setItem('revision-list-filter', JSON.stringify(currentData)); // Save as JSON
     });
 
     // Remove submit button elements if present
@@ -694,11 +708,11 @@ import collapsibleAccordionInit from "sumo/js/protocol-details-init";
 
     // Disable form submission via Enter key
     $form.on('keydown', function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-        }
+      if (e.which === 13) {
+        e.preventDefault();
+      }
     });
-}
+  }
 
 
   init();
