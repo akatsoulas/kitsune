@@ -83,19 +83,152 @@ class KBOverviewTests(TestCase):
         self.assertEqual(2, len(kb_overview_rows(user=user1)))
 
     def test_ready_for_l10n(self):
-        d = DocumentFactory()
-        r = RevisionFactory(document=d)
-        d.current_revision = r
-        d.save()
+        d1 = DocumentFactory()
+        ApprovedRevisionFactory(document=d1, significance=MAJOR_SIGNIFICANCE)
+        d2 = DocumentFactory()
+        rev1_d2 = RevisionFactory(document=d2, significance=None)
 
-        data = kb_overview_rows()
-        self.assertEqual(1, len(data))
+        WikiDocumentVisits.objects.create(document=d1, visits=20, period=LAST_30_DAYS)
+        WikiDocumentVisits.objects.create(document=d2, visits=10, period=LAST_30_DAYS)
+
+        data = kb_overview_rows(user=UserFactory(is_staff=True, is_superuser=True))
+        self.assertEqual(2, len(data))
         self.assertEqual(False, data[0]["ready_for_l10n"])
+        self.assertEqual(False, data[1]["ready_for_l10n"])
 
-        ApprovedRevisionFactory(document=d, is_ready_for_localization=True)
-
+        ApprovedRevisionFactory(
+            document=d1, is_ready_for_localization=True, significance=MEDIUM_SIGNIFICANCE
+        )
+        rev1_d2.is_approved = True
+        rev1_d2.significance = MAJOR_SIGNIFICANCE
+        rev1_d2.save()
         data = kb_overview_rows()
         self.assertEqual(True, data[0]["ready_for_l10n"])
+        self.assertEqual(False, data[1]["ready_for_l10n"])
+
+        ApprovedRevisionFactory(document=d1, significance=TYPO_SIGNIFICANCE)
+        ApprovedRevisionFactory(
+            document=d2, is_ready_for_localization=True, significance=MEDIUM_SIGNIFICANCE
+        )
+        data = kb_overview_rows()
+        self.assertEqual(True, data[0]["ready_for_l10n"])
+        self.assertEqual(True, data[1]["ready_for_l10n"])
+
+        ApprovedRevisionFactory(document=d1, significance=MEDIUM_SIGNIFICANCE)
+        ApprovedRevisionFactory(document=d2, significance=TYPO_SIGNIFICANCE)
+        data = kb_overview_rows()
+        self.assertEqual(False, data[0]["ready_for_l10n"])
+        self.assertEqual(True, data[1]["ready_for_l10n"])
+
+        ApprovedRevisionFactory(
+            document=d1, is_ready_for_localization=True, significance=MAJOR_SIGNIFICANCE
+        )
+        ApprovedRevisionFactory(document=d2, significance=MAJOR_SIGNIFICANCE)
+        data = kb_overview_rows()
+        self.assertEqual(True, data[0]["ready_for_l10n"])
+        self.assertEqual(False, data[1]["ready_for_l10n"])
+
+        ApprovedRevisionFactory(document=d1, significance=TYPO_SIGNIFICANCE)
+        ApprovedRevisionFactory(document=d2, significance=TYPO_SIGNIFICANCE)
+        data = kb_overview_rows()
+        self.assertEqual(True, data[0]["ready_for_l10n"])
+        self.assertEqual(False, data[1]["ready_for_l10n"])
+
+        ApprovedRevisionFactory(document=d1, significance=MEDIUM_SIGNIFICANCE)
+        ApprovedRevisionFactory(
+            document=d2, is_ready_for_localization=True, significance=MEDIUM_SIGNIFICANCE
+        )
+        data = kb_overview_rows()
+        self.assertEqual(False, data[0]["ready_for_l10n"])
+        self.assertEqual(True, data[1]["ready_for_l10n"])
+
+    def test_revision_comment(self):
+        d1 = DocumentFactory()
+        rev1_d1 = RevisionFactory(document=d1)
+        rev2_d1 = RevisionFactory(document=d1)
+        d2 = DocumentFactory()
+        ApprovedRevisionFactory(document=d2)
+        rev1_d2 = RevisionFactory(document=d2)
+        rev2_d2 = RevisionFactory(document=d2)
+
+        WikiDocumentVisits.objects.create(document=d1, visits=20, period=LAST_30_DAYS)
+        WikiDocumentVisits.objects.create(document=d2, visits=10, period=LAST_30_DAYS)
+
+        data = kb_overview_rows(user=UserFactory(is_staff=True, is_superuser=True))
+        self.assertEqual(2, len(data))
+        self.assertNotIn("latest_revision", data[0])
+        self.assertNotIn("latest_revision", data[1])
+        self.assertEqual(rev1_d1.comment, data[0]["revision_comment"])
+        self.assertEqual(rev1_d2.comment, data[1]["revision_comment"])
+
+        rev2_d1.is_approved = True
+        rev2_d1.save()
+        data = kb_overview_rows()
+        self.assertNotIn("revision_comment", data[0])
+        self.assertNotIn("latest_revision", data[1])
+        self.assertTrue(data[0]["latest_revision"])
+        self.assertEqual(rev1_d2.comment, data[1]["revision_comment"])
+
+        rev2_d2.is_approved = True
+        rev2_d2.save()
+        data = kb_overview_rows()
+        self.assertNotIn("revision_comment", data[0])
+        self.assertNotIn("revision_comment", data[1])
+        self.assertTrue(data[0]["latest_revision"])
+        self.assertTrue(data[1]["latest_revision"])
+
+    def test_needs_update(self):
+        rev1 = ApprovedRevisionFactory()
+        en_doc1 = rev1.document
+
+        rev2 = ApprovedRevisionFactory(
+            document__needs_change=True,
+            document__needs_change_comment="Doc2 needs to be updated.",
+        )
+        en_doc2 = rev2.document
+
+        trans_rev1 = TranslatedRevisionFactory(
+            document__locale="de",
+            document__parent__needs_change=True,
+            document__parent__needs_change_comment="Doc3 needs to be updated.",
+        )
+        en_doc3 = trans_rev1.document.parent
+        ApprovedRevisionFactory(document=en_doc3, significance=TYPO_SIGNIFICANCE)
+
+        trans_rev2 = TranslatedRevisionFactory(
+            document__locale="de",
+            document__parent__needs_change=True,
+            document__parent__needs_change_comment="Doc4 needs to be updated.",
+        )
+        en_doc4 = trans_rev2.document.parent
+        ApprovedRevisionFactory(
+            document=en_doc4, is_ready_for_localization=True, significance=MEDIUM_SIGNIFICANCE
+        )
+
+        WikiDocumentVisits.objects.create(document=en_doc1, visits=40, period=LAST_30_DAYS)
+        WikiDocumentVisits.objects.create(document=en_doc2, visits=30, period=LAST_30_DAYS)
+        WikiDocumentVisits.objects.create(document=en_doc3, visits=20, period=LAST_30_DAYS)
+        WikiDocumentVisits.objects.create(document=en_doc4, visits=10, period=LAST_30_DAYS)
+
+        data = kb_overview_rows(locale="en-US")
+        self.assertEqual(False, data[0]["needs_update"])
+        self.assertEqual("", data[0]["needs_update_comment"])
+        self.assertEqual(True, data[1]["needs_update"])
+        self.assertEqual(en_doc2.needs_change_comment, data[1]["needs_update_comment"])
+        self.assertEqual(True, data[2]["needs_update"])
+        self.assertEqual(en_doc3.needs_change_comment, data[2]["needs_update_comment"])
+        self.assertEqual(True, data[3]["needs_update"])
+        self.assertEqual(en_doc4.needs_change_comment, data[3]["needs_update_comment"])
+
+        data = kb_overview_rows(locale="de")
+        self.assertNotIn("needs_update", data[0])
+        self.assertNotIn("needs_update_comment", data[0])
+        self.assertNotIn("needs_update", data[1])
+        self.assertNotIn("needs_update_comment", data[1])
+        self.assertEqual(False, data[2]["needs_update"])
+        self.assertNotIn("needs_update_comment", data[2])
+        self.assertEqual(True, data[3]["needs_update"])
+        self.assertNotIn("needs_update_comment", data[3])
 
     def test_filter_by_category(self):
         ApprovedRevisionFactory(document__category=CATEGORIES[1][0])
