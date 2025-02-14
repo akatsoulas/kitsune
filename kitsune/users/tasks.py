@@ -7,8 +7,7 @@ from kitsune.products.models import Product
 from kitsune.sumo.decorators import skip_if_read_only_mode
 from kitsune.users.auth import FXAAuthBackend
 from kitsune.users.models import AccountEvent
-from kitsune.users.utils import anonymize_user
-
+from kitsune.users.utils import delete_user_pipeline
 
 shared_task_with_retry = shared_task(
     acks_late=True, autoretry_for=(Exception,), retry_backoff=2, retry_kwargs=dict(max_retries=4)
@@ -20,10 +19,9 @@ shared_task_with_retry = shared_task(
 def process_event_delete_user(event_id):
     event = AccountEvent.objects.get(id=event_id)
 
-    anonymize_user(event.profile.user)
-
-    event.status = AccountEvent.PROCESSED
-    event.save()
+    if delete_user_pipeline(event.profile.user):
+        event.status = AccountEvent.PROCESSED
+        event.save()
 
 
 @shared_task_with_retry
