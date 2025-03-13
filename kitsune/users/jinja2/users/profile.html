@@ -35,7 +35,9 @@
               </a>
            </div>
           {% endif %}
-          {{ flag_form(url('users.flag', object_id=profile.pk), profile.id, False) }}
+          {% if not profile.is_system_account %}
+            {{ flag_form(url('users.flag', object_id=profile.pk), profile.id, False) }}
+          {% endif %}
         {% endif %}
         <h2 class="sumo-callout-heading user">{{ display_name(profile.user) }}
           {% if profile.name %}
@@ -115,7 +117,7 @@
 
 
       {% if user.id != profile.user.id and user.has_perm('users.deactivate_users') %}
-        {% if profile.user.is_active %}
+        {% if profile.user.is_active and not profile.is_system_account %}
           <form class="deactivate" method="post" action="{{ url('users.deactivate') }}">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ profile.user.id }}">
