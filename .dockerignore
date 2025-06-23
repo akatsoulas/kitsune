@@ -1,19 +1,53 @@
-venv
-.git
+# Python
+__pycache__/
 *.pyc
-*.poc
-/static
+*.pyo
+*.pyd
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Poetry
+.venv
+
+# Node
+.npm
+node_modules/
+npm-debug.log
+
+# Tests
+**/tests/
+playwright_tests/
+
+# Documentation
+docs/
+
+# Local config
 .env
+.env-dist
+
+# Other
+.vscode/
+.idea/
+README.md
+CONTRIBUTORS.rst
+CODE_OF_CONDUCT.md
+LICENSE
+Makefile
+mkdocs.yml
+contribute.json
+gcloud/
+bin/
+/static
 /media
 *.gz
 /locale
-/node_modules
-/bower_components
-Dockerfile
-/jsi18n
 docker/dockerfiles/
-__pycache__
-.npm
 .vscode-server
 .cache
 .ssh
