@@ -1286,8 +1286,7 @@ class AAQTemplateTestCase(TestCase):
         "ff_version": "3.6.6",
         "os": "Intel Mac OS X 10.6",
         "plugins": "* Shockwave Flash 10.1 r53",
-        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8.3) "
-        "Gecko/20120221 Firefox/18.0",
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8.3) Gecko/20120221 Firefox/18.0",
         "troubleshooting": """{
                 "accessibility": {
                     "isActive": true

@@ -285,8 +285,7 @@ class GetBrowserNameTest(TestCase):
         self.assertEqual(get_browser(user_agent), "Trident")
         # Check with Compatibility View situation user Agent of IE11
         user_agent = (
-            "Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; "
-            "Trident/7.0;  rv:11.0) like Gecko"
+            "Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0;  rv:11.0) like Gecko"
         )
         self.assertEqual(get_browser(user_agent), "MSIE")
 

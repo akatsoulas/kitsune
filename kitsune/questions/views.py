@@ -1382,7 +1382,7 @@ def watch_question(request, question_id):
             msg = msg or (
                 _("You will be notified of updates by email.")
                 if request.user.is_authenticated
-                else _("You should receive an email shortly " "to confirm your subscription.")
+                else _("You should receive an email shortly to confirm your subscription.")
             )
             return HttpResponse(json.dumps({"message": msg}))
 

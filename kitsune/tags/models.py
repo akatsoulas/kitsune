@@ -4,7 +4,6 @@ from taggit.models import GenericTaggedItemBase, TagBase
 
 
 class SumoTagManager(models.Manager):
-
     def segmentation_tags(self):
         return self.filter(is_archived=False, slug__startswith="seg-")
 

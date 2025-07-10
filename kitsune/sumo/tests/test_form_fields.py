@@ -21,7 +21,7 @@ class TypedMultipleChoiceFieldTestCase(TestCase):
         self.assertEqual([1], f.clean(["1"]))
         self.assertRaisesErrorWithMessage(
             ValidationError,
-            "['Select a valid choice. 2 is not one of the available choices." "']",
+            "['Select a valid choice. 2 is not one of the available choices.']",
             f.clean,
             ["2"],
         )
@@ -43,7 +43,7 @@ class TypedMultipleChoiceFieldTestCase(TestCase):
         f = TypedMultipleChoiceField(choices=[("A", "A"), ("B", "B")], coerce=int)
         self.assertRaisesErrorWithMessage(
             ValidationError,
-            "['Select a valid choice. B is not one of the available choices." "']",
+            "['Select a valid choice. B is not one of the available choices.']",
             f.clean,
             ["B"],
         )

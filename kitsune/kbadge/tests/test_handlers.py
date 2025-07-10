@@ -8,7 +8,6 @@ from kitsune.users.tests import UserFactory
 
 
 class TestAwardListener(TestCase):
-
     def setUp(self):
         self.user = UserFactory()
         Profile.get_sumo_bot()
@@ -32,7 +31,6 @@ class TestAwardListener(TestCase):
 
 
 class TestBadgeListener(TestCase):
-
     def setUp(self):
         self.user = UserFactory()
         Profile.get_sumo_bot()

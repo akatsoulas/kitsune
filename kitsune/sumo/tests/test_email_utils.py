@@ -136,7 +136,6 @@ class PremailerTests(TestCase):
 
 
 class SendMessagesTests(TestCase):
-
     @patch("kitsune.sumo.email_utils.mail")
     def test_send_messages(self, mock_mail):
         from_email = "notifications@support.mozilla.org"

@@ -1480,7 +1480,7 @@ class ReviewRevisionTests(TestCase):
         user_ = UserFactory()
         self.revision = Revision(
             summary="lipsum",
-            content="<div>Lorem {for mac}Ipsum{/for} " "Dolor</div>",
+            content="<div>Lorem {for mac}Ipsum{/for} Dolor</div>",
             keywords="kw1 kw2",
             document=self.document,
             creator=user_,

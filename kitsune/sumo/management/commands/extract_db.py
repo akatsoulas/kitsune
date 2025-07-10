@@ -58,7 +58,7 @@ class Command(BaseCommand):
             "-o",
             default=os.path.join(settings.ROOT, "kitsune", "sumo", "db_strings.py"),
             dest="outputfile",
-            help=("The file where extracted strings are written to. " "(Default: %default)"),
+            help=("The file where extracted strings are written to. (Default: %default)"),
         )
 
     def handle(self, *args, **options):

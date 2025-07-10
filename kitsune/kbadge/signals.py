@@ -25,6 +25,7 @@ The sender will be :py:class:`badges.models.Award` class. The
 awarded.
 
 """
+
 from django.dispatch import Signal
 
 

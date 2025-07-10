@@ -49,7 +49,7 @@ class Product(BaseProductTopic):
         null=True,
         blank=True,
         max_length=settings.MAX_FILEPATH_LENGTH,
-        help_text=("Used everywhere except the home " "page. Must be 96x96."),
+        help_text=("Used everywhere except the home page. Must be 96x96."),
     )
     image_offset = models.IntegerField(default=None, null=True, editable=False)
     image_cachebuster = models.CharField(max_length=32, default=None, null=True, editable=False)

@@ -223,7 +223,7 @@ class Event(object):
                     "AND f{n}.name=%s".format(n=n)
                 )
                 join_params.append(k)
-                wheres.append("(f{n}.value=%s " "OR f{n}.value IS NULL)".format(n=n))
+                wheres.append("(f{n}.value=%s OR f{n}.value IS NULL)".format(n=n))
                 where_params.append(hash_to_unsigned(v))
             return joins, wheres, join_params + where_params
 
@@ -238,7 +238,7 @@ class Event(object):
 
         # Constrain on other 1-to-1 attributes:
         if self.content_type:
-            wheres.append("(w.content_type_id IS NULL " "OR w.content_type_id=%s)")
+            wheres.append("(w.content_type_id IS NULL OR w.content_type_id=%s)")
             params.append(ContentType.objects.get_for_model(self.content_type).id)
         if object_id:
             wheres.append("(w.object_id IS NULL OR w.object_id=%s)")

@@ -391,7 +391,7 @@ def l10n_overview_rows(locale, product=None, user=None):
             "numerator": top_50_translated,
             "denominator": 50 if total_docs > 50 else total_docs,
             "percent": percent_or_100(top_50_translated, 50 if total_docs > 50 else total_docs),
-            "description": _("These are the top 50 most visited articles " "in the last 30 days."),
+            "description": _("These are the top 50 most visited articles in the last 30 days."),
         },
         "top-100": {
             "title": _("Top 100 Articles"),
@@ -423,8 +423,7 @@ def l10n_overview_rows(locale, product=None, user=None):
             "denominator": total_docs,
             "percent": percent_or_100(translated_docs, total_docs),
             "description": _(
-                "This is the number of all Knowledge Base "
-                "articles that are ready to be localized."
+                "This is the number of all Knowledge Base articles that are ready to be localized."
             ),
         },
     }
@@ -1052,11 +1051,10 @@ class UnreadyForLocalizationReadout(Readout):
 
     title = _lazy("Changes Not Ready For Localization")
     description = _lazy(
-        "Articles which have approved revisions newer than "
-        "the latest ready-for-localization one"
+        "Articles which have approved revisions newer than the latest ready-for-localization one"
     )
     # No short_title; the Contributors dash lacks an Overview readout
-    details_link_text = _lazy("All articles with changes not ready for " "localization...")
+    details_link_text = _lazy("All articles with changes not ready for localization...")
     slug = "unready"
     column4_label = _lazy("Approved")
 

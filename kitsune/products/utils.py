@@ -99,7 +99,6 @@ def get_products(
     products_qs = products_qs.filter(Q(visible=True) | Q(slug="mozilla-account"))
 
     for product in products_qs:
-
         item = dict(title=product.title)
 
         if include_metadata:

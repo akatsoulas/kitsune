@@ -30,7 +30,6 @@ def question_classifier(question_id):
             status=FlaggedObject.FLAG_PENDING,
             by_user=Profile.get_sumo_bot(),
             notes=(
-                "Automatically flagged for topic moderation:"
-                " auto-question-classifier is disabled"
+                "Automatically flagged for topic moderation: auto-question-classifier is disabled"
             ),
         )

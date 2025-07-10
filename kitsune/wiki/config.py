@@ -59,7 +59,7 @@ SIGNIFICANCES = [
     ),
     (
         MAJOR_SIGNIFICANCE,
-        _lazy("Major content changes that will make older translations " "inaccurate"),
+        _lazy("Major content changes that will make older translations inaccurate"),
     ),
 ]
 

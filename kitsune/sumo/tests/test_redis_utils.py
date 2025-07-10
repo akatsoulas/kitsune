@@ -7,7 +7,6 @@ from kitsune.sumo.tests import TestCase
 
 
 class TestRateLimit(TestCase):
-
     def setUp(self):
         self.key = "test-key"
         self.max_calls = 5
@@ -29,14 +28,14 @@ class TestRateLimit(TestCase):
     def test_is_rate_limited(self):
         """Ensure basic operation of is_rate_limited()."""
         for i in range(self.max_calls):
-            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i+1}")
+            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i + 1}")
 
         self.assertTrue(self.rate_limit.is_rate_limited())
 
     def test_is_rate_limited_expiration(self):
         """Ensure is_rate_limited() resets after the expiration period."""
         for i in range(self.max_calls):
-            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i+1}")
+            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i + 1}")
 
         self.assertTrue(self.rate_limit.is_rate_limited())
         time.sleep(1)
@@ -45,7 +44,7 @@ class TestRateLimit(TestCase):
     def test_wait(self):
         """Ensure wait() waits until we're no longer rate limited."""
         for i in range(self.max_calls):
-            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i+1}")
+            self.assertFalse(self.rate_limit.is_rate_limited(), f"is_rate_limited() call: {i + 1}")
 
         time_waited = self.rate_limit.wait()
 

@@ -21,7 +21,7 @@ class Announcement(ModelBase):
         default=datetime.now,
         db_index=True,
         verbose_name="Start displaying",
-        help_text=("When this announcement will start appearing. " "(US/Pacific)"),
+        help_text=("When this announcement will start appearing. (US/Pacific)"),
     )
     show_until = models.DateTimeField(
         db_index=True,
@@ -29,8 +29,7 @@ class Announcement(ModelBase):
         blank=True,
         verbose_name="Stop displaying",
         help_text=(
-            "When this announcement will stop appearing. "
-            "Leave blank for indefinite. (US/Pacific)"
+            "When this announcement will stop appearing. Leave blank for indefinite. (US/Pacific)"
         ),
     )
     content = models.TextField(

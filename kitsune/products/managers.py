@@ -11,7 +11,6 @@ class NonArchivedManager(Manager):
 
 class ProductManager(NonArchivedManager):
     def with_question_forums(self, language_code: str = ""):
-
         q_kwargs: dict[str, Any] = {
             "aaq_configs__is_active": True,
         }

@@ -218,7 +218,6 @@ class PIIRemovalTests(TestCase):
 
 
 class ProcessClassificationResultTests(TestCase):
-
     def setUp(self):
         self.topic1 = TopicFactory()
         self.topic2 = TopicFactory()

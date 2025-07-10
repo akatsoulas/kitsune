@@ -4,7 +4,6 @@ from kitsune.sumo.tests import TestCase
 
 
 class GetTaxonomyTests(TestCase):
-
     def setUp(self):
         p1 = ProductFactory(title="product1", slug="p1")
         p2 = ProductFactory(title="product2", slug="p2")
@@ -411,7 +410,6 @@ class GetTaxonomyTests(TestCase):
 
 
 class GetProductsTests(TestCase):
-
     def setUp(self):
         ProductFactory(
             title="product1",

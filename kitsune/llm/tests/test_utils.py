@@ -8,7 +8,6 @@ from kitsune.sumo.tests import TestCase
 
 @patch("kitsune.llm.utils.coerce_to_runnable", side_effect=lambda x: x)
 class BuildChainWithRetryTestCase(TestCase):
-
     def setUp(self):
         self.prompt = Mock()
         self.llm = Mock()

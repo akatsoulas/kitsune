@@ -127,7 +127,6 @@ class GenerateShortUrlTestCase(TestCase):
 
 
 class FeaturedArticlesTestCase(TestCase):
-
     def setUp(self):
         super().setUp()
         self.product1 = product1 = ProductFactory()

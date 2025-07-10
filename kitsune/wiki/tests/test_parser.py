@@ -585,14 +585,7 @@ class ForWikiTests(TestCase):
     def test_nested(self):
         """{for} tags should be nestable."""
         self.assertWikiHtmlEqual(
-            "{for mac}\n"
-            "Joe\n"
-            "\n"
-            "Red {for}{for}riding\n"
-            "{/for} hood{/for}\n"
-            "\n"
-            "Blow\n"
-            "{/for}",
+            "{for mac}\nJoe\n\nRed {for}{for}riding\n{/for} hood{/for}\n\nBlow\n{/for}",
             '<div data-for="mac" class="for">'
             "<p>Joe</p>"
             '<p>Red <span class="for"><span class="for">riding'
@@ -653,12 +646,7 @@ class ForWikiTests(TestCase):
         """Make sure one block-level {for} doesn't absorb an adjacent one."""
         p = WikiParser()
         html = p.parse(
-            "{for fx4}\n"
-            "{for mac}Fx4{/for}\n"
-            "{/for}\n"
-            "{for fx3}\n"
-            "{for mac}Fx3{/for}\n"
-            "{/for}"
+            "{for fx4}\n{for mac}Fx4{/for}\n{/for}\n{for fx3}\n{for mac}Fx3{/for}\n{/for}"
         )
         # The two div.fors should be siblings, not nested:
         self.assertEqual([], pq(html)("div.for div.for"))
@@ -822,12 +810,7 @@ class ForParserTests(TestCase):
         strip_eq(
             "\x910\x91\n\n\x911\x91Fx4\x91/sf\x91\n\n\x91/sf\x91\n\n"
             "\x912\x91\n\n\x913\x91Fx3\x91/sf\x91\n\n\x91/sf\x91",
-            "{for fx4}\n"
-            "{for mac}Fx4{/for}\n"
-            "{/for}\n"
-            "{for fx3}\n"
-            "{for mac}Fx3{/for}\n"
-            "{/for}",
+            "{for fx4}\n{for mac}Fx4{/for}\n{/for}\n{for fx3}\n{for mac}Fx3{/for}\n{/for}",
         )
 
     def test_self_closers(self):

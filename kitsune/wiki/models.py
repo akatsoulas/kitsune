@@ -550,9 +550,7 @@ class Document(NotificationsMixin, ModelBase, DocumentPermissionMixin):
         """
         if self.locale != settings.WIKI_DEFAULT_LANGUAGE:
             raise NotImplementedError(
-                "translated_to() is implemented only on"
-                "Documents in the default language so"
-                "far."
+                "translated_to() is implemented only onDocuments in the default language sofar."
             )
         try:
             if visible_for_user:

@@ -13,7 +13,7 @@ from kitsune.users.utils import add_to_contributors
 from kitsune.users.widgets import MonthYearWidget
 
 USERNAME_INVALID = _lazy(
-    "Username may contain only English letters, " "numbers and ./-/_ characters."
+    "Username may contain only English letters, numbers and ./-/_ characters."
 )
 USERNAME_REQUIRED = _lazy("Username is required.")
 USERNAME_SHORT = _lazy(

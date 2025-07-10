@@ -29,7 +29,7 @@ def _insert_custom_filters(analyzer_name, filter_list, char=False):
                 # to avoid defining the same filter for each locale
                 prefix = config.ES_DEFAULT_ANALYZER_NAME
                 position = default_filters.index(filter)
-            name = f'{prefix}_{position}_{filter["type"]}'
+            name = f"{prefix}_{position}_{filter['type']}"
             if char:
                 return char_filter(name, **filter)
             return token_filter(name, **filter)

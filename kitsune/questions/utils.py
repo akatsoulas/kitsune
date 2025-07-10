@@ -189,7 +189,6 @@ def update_question_fields_from_classification(question, result, sumo_bot):
     update_fields = {}
 
     if new_product_title and question.product.title != new_product_title:
-
         if new_product := get_object_by_title(
             Product,
             new_product_title,
