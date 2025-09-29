@@ -15,6 +15,40 @@ class QuestionManagerTestCase(TestCase):
         q.mark_as_spam(Profile.get_sumo_bot())
         self.assertEqual(1, Question.objects.spam().count())
 
+    def test_detected_spam(self):
+        """Verify the detected_spam queryset for bot-marked spam."""
+        q1 = QuestionFactory()
+        q2 = QuestionFactory()
+
+        # Mark one question as spam by bot
+        q1.mark_as_spam(Profile.get_sumo_bot())
+        self.assertEqual(1, Question.objects.detected_spam().count())
+
+        # Mark another by human user
+        from kitsune.users.tests import UserFactory
+        human_user = UserFactory()
+        q2.mark_as_spam(human_user)
+
+        # Should still only have 1 bot-detected spam
+        self.assertEqual(1, Question.objects.detected_spam().count())
+
+    def test_undetected_spam(self):
+        """Verify the undetected_spam queryset for manually marked spam."""
+        q1 = QuestionFactory()
+        q2 = QuestionFactory()
+
+        # Mark one question as spam by human
+        from kitsune.users.tests import UserFactory
+        human_user = UserFactory()
+        q1.mark_as_spam(human_user)
+        self.assertEqual(1, Question.objects.undetected_spam().count())
+
+        # Mark another by bot
+        q2.mark_as_spam(Profile.get_sumo_bot())
+
+        # Should still only have 1 manually marked spam
+        self.assertEqual(1, Question.objects.undetected_spam().count())
+
     def test_done(self):
         """Verify the done queryset."""
         # Create a question, there shouldn't be any done yet.
