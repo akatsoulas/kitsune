@@ -116,65 +116,62 @@
       </em></p>
     {% endif %}
   </div>
-  {% if answer.id and question.editable %}
-    <div class="answer-tools align-end">
-      {% if user.is_authenticated and user != answer.creator %}
-      <div class="document-vote is-forum-answer text-right">
-        <form class="document-vote--form helpful" action="{{ url('questions.answer_vote', question_id=question.id, answer_id=answer.id) }}" method="post">
-          {% csrf_token %}
-          <h4 class="document-vote--heading">{{ _('Helpful?') }}</h4>
-          <div class="document-vote--buttons">
-            <button type="submit" class="btn helpful-button" name="helpful" {% if answer.has_voted(request) %}disabled{% endif %}>
-              <span class="hidden-text">{{ _('Yes') }}</span>
-              {% if answer.num_votes != 0 %}
-              <strong class="helpful-count">{{ answer.num_helpful_votes }}</strong>
-              {% endif %}
-              <span class="emoji">👍</span>
-            </button>
-            <button type="submit" class="btn helpful-button" name="not-helpful" value="{{ _('No') }}" {% if answer.has_voted(request) %}disabled{% endif %}>
-              {% if answer.num_votes != 0 %}
-              <strong class="helpful-count">{{ answer.num_unhelpful_votes }}</strong>
-              {% endif %}
-              <span class="hidden-text">{{ _('No') }}</span>
-              <span class="emoji">👎</span>
-            </button>
-          </div>
-
-        </form>
-      </div>
+  {% if answer.id %}
+    {% set _show_vote = question.editable and user.is_authenticated and user != answer.creator %}
+    {% set _show_solve = not question.solution and question.allows_solve(user) %}
+    {% set _show_unsolve = question.solution == answer and question.allows_unsolve(user) %}
+    {% if _show_vote or _show_solve or _show_unsolve %}
+    <div class="answer-footer">
+      {% if _show_vote %}
+      <form class="answer-vote helpful" action="{{ url('questions.answer_vote', question_id=question.id, answer_id=answer.id) }}" method="post">
+        {% csrf_token %}
+        <span class="answer-vote--label">{{ _('Helpful?') }}</span>
+        <button type="submit" class="answer-vote--btn" name="helpful"
+                title="{{ _('Yes, this was helpful') }}" {% if answer.has_voted(request) %}disabled{% endif %}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 12v3h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+          </svg>
+          <strong class="answer-vote--count">{{ answer.num_helpful_votes }}</strong>
+        </button>
+        <button type="submit" class="answer-vote--btn answer-vote--btn--down" name="not-helpful"
+                title="{{ _('No, this was not helpful') }}" {% if answer.has_voted(request) %}disabled{% endif %}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M10 15v4a3 3 0 0 0 3 3l4-12V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/>
+            <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
+          </svg>
+          <strong class="answer-vote--count">{{ answer.num_unhelpful_votes }}</strong>
+        </button>
+      </form>
+      {% else %}
+      <div></div>
       {% endif %}
+      <div class="answer-footer--actions">
+        {% if _show_solve %}
+        <form class="solution" action="{{ url('questions.solve', question_id=question.id, answer_id=answer.id) }}" method="post">
+          {% csrf_token %}
+          <button type="submit" name="solution" class="sumo-button secondary-button button-sm answer-tools--solve-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            {{ _('Mark as solution') }}
+          </button>
+        </form>
+        {% endif %}
+        {% if _show_unsolve %}
+        <form class="unsolve" action="{{ url('questions.unsolve', question_id=question.id, answer_id=answer.id) }}" method="post">
+          {% csrf_token %}
+          <button type="submit" name="unsolve" class="sumo-button secondary-button button-sm">{{ _('Undo solution') }}</button>
+        </form>
+        {% endif %}
+      </div>
     </div>
+    {% endif %}
   {% endif %}
 </div>
-
-
-
-  {# answer.id is None when previewing #}
-  {% if answer.id and not question.solution and question.allows_solve(user) %}
-  <aside class="answer--tools">
-    <div class="answer--tools-form">
-      <form class="solution" action="{{ url('questions.solve', question_id=question.id, answer_id=answer.id) }}" method="post">
-        {% csrf_token %}
-        {% if user == question.creator %}
-          <p class="text-body-sm title">{{ _('Did this reply solve your problem?') }}</p>
-          <input type="submit" class="sumo-button secondary-button button-sm" name="solution" value="{{ _('Solved the problem') }}" />
-        {% else %}
-          <p class="text-body-sm title">{{ _('Does this reply solve the problem?') }}</p>
-          <input type="submit" class="sumo-button secondary-button button-sm" name="solution" value="{{ _('Solves the problem') }}" />
-        {% endif %}
-      </form>
-    </div>
-  </aside>
-  {% endif %}
-
-  {% if answer.id and question.solution == answer and question.allows_unsolve(user) %}
-  <aside class="answer--tools">
-    <div class="answer--tools-form">
-      <p class="text-body-sm title">{{ _('Solution chosen') }}</p>
-      <form class="unsolve" action="{{ url('questions.unsolve', question_id=question.id, answer_id=answer.id) }}" method="post">
-        {% csrf_token %}
-        <input type="submit" name="unsolve" class="sumo-button secondary-button button-sm" value="{{ _('Undo') }}" />
-      </form>
-    </div>
-  </aside>
-  {% endif %}

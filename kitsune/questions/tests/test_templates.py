@@ -7,6 +7,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
+from django.core.cache import cache
 from django.utils import timezone
 from pyquery import PyQuery as pq
 
@@ -129,7 +130,7 @@ class AnswersTemplateTestCase(TestCase):
         self.client.login(username=self.question.creator.username, password="testpass")
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        self.assertEqual(1, len(doc('input[name="solution"]')))
+        self.assertEqual(1, len(doc('button[name="solution"]')))
         self.client.logout()
 
         # Try as a nobody
@@ -137,7 +138,7 @@ class AnswersTemplateTestCase(TestCase):
         self.client.login(username=u.username, password="testpass")
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        self.assertEqual(0, len(doc('input[name="solution"]')))
+        self.assertEqual(0, len(doc('button[name="solution"]')))
 
         ans = self.question.answers.all()[0]
         # Try to solve
@@ -186,7 +187,7 @@ class AnswersTemplateTestCase(TestCase):
         # Check that there are no votes and vote form renders
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        assert "0" in doc(".have-problem")[0].text
+        assert "0" in doc(".question-entry--vote-count").text()
         self.assertEqual(me_too_count, len(doc("div.me-too form")))
 
         # Vote
@@ -198,7 +199,7 @@ class AnswersTemplateTestCase(TestCase):
         # Check that there is 1 vote and vote form doesn't render
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        assert "1" in doc(".have-problem")[0].text
+        assert "1" in doc(".question-entry--vote-count").text()
         self.assertEqual(0, len(doc("div.me-too form")))
         # Verify user agent
         vote_meta = VoteMetadata.objects.all()[0]
@@ -209,7 +210,7 @@ class AnswersTemplateTestCase(TestCase):
         post(self.client, "questions.vote", args=[self.question.id])
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        assert "1" in doc(".have-problem")[0].text
+        assert "1" in doc(".question-entry--vote-count").text()
 
     def test_question_authenticated_vote(self):
         """Authenticated user vote."""
@@ -295,7 +296,7 @@ class AnswersTemplateTestCase(TestCase):
         Answer.objects.create(question=q, creator=q.creator, content="test")
         response = get(self.client, "questions.details", args=[q.id])
         doc = pq(response.content)
-        self.assertEqual(2, len(doc('form.solution input[name="solution"]')))
+        self.assertEqual(2, len(doc('form.solution button[name="solution"]')))
 
     def test_delete_question_without_permissions(self):
         """Deleting a question without permissions is a 403."""
@@ -781,6 +782,7 @@ class AnswersTemplateTestCase(TestCase):
 
     def test_links_nofollow(self):
         """Links posted in questions and answers should have rel=nofollow."""
+        cache.clear()  # Prevent stale locmem cache from other tests contaminating results
         q = self.question
         q.content = "lorem http://ipsum.com"
         q.save()
@@ -789,8 +791,8 @@ class AnswersTemplateTestCase(TestCase):
         a.save()
         response = get(self.client, "questions.details", args=[self.question.id])
         doc = pq(response.content)
-        self.assertEqual("nofollow", doc(".question .main-content a")[0].attrib["rel"])
-        self.assertEqual("nofollow", doc(".answer .main-content a")[0].attrib["rel"])
+        self.assertEqual("nofollow", doc(".question .content a")[0].attrib["rel"])
+        self.assertEqual("nofollow", doc(f"#answer-{a.id} .content a")[0].attrib["rel"])
 
     def test_robots_noindex_unsolved(self):
         """Verify noindex on unsolved questions."""

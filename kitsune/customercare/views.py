@@ -1,13 +1,27 @@
 import json
 
-from django.contrib.auth.decorators import permission_required
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
 from kitsune.customercare.models import SupportTicket
 from kitsune.customercare.utils import generate_classification_tags
 from kitsune.products.models import Topic
+
+
+@login_required
+def ticket_detail(request, username, ticket_id):
+    ticket = get_object_or_404(
+        SupportTicket.objects.select_related("product", "topic", "user"),
+        id=ticket_id,
+        user__username=username,
+    )
+    is_owner = ticket.user_id == request.user.id
+    can_moderate = request.user.has_perm("customercare.change_supportticket")
+    if not (is_owner or can_moderate):
+        raise Http404
+    return render(request, "customercare/ticket_detail.html", {"ticket": ticket})
 
 
 @require_POST

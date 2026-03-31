@@ -1,0 +1,60 @@
+{#
+  Shared base template for thread/question/ticket detail views.
+
+  Extends base.html. Provides named blocks for every structural region.
+  Child templates fill only the blocks they need; everything else is empty.
+
+  Required child setup (set before block content):
+    - title         — browser <title> prefix
+    - canonical_url — set via canonicalize()
+    - classes       — body class (e.g. 'answers' for Q&A JS hooks)
+    - scripts       — tuple of webpack entry points (e.g. ('questions', 'topics'))
+
+  Block reference:
+    thread_notice        — locked/archived/spam alert bar (above article)
+    thread_product_logo  — product <img> (inside header, before title)
+    thread_title         — the h1 text (itemprop="headline")
+    thread_meta          — flex row of channel badge / status / stats / links
+    thread_post_header   — the {% call post_header(...) %} invocation
+    thread_post_body     — parsed HTML / plain text of the original post
+    thread_tools         — below-post interactive tools (me-too vote button, etc.)
+    thread_replies       — full replies or comments section
+    thread_reply_form    — reply editor form
+    side                 — sidebar (empty = no sidebar column)
+#}
+{% extends "base.html" %}
+
+{% block content %}
+<article {% block article_attrs %}{% endblock %}>
+  {% block thread_notice %}{% endblock %}
+
+  <header class="thread-detail--header">
+    {% block thread_product_logo %}{% endblock %}
+    <h1 class="thread-detail--title" itemprop="headline">
+      {% block thread_title %}{% endblock %}
+    </h1>
+    <div class="thread-detail--meta">
+      {% block thread_meta %}{% endblock %}
+    </div>
+  </header>
+
+  {% block thread_meta_extra %}{% endblock %}
+
+  <div class="thread-post">
+    {% block thread_post_header %}{% endblock %}
+    <div class="thread-post--body">
+      {% block thread_post_body %}{% endblock %}
+    </div>
+  </div>
+
+  {% block thread_tools %}{% endblock %}
+
+  <section class="thread-replies">
+    {% block thread_replies %}{% endblock %}
+  </section>
+
+  {% block thread_reply_form %}{% endblock %}
+</article>
+{% endblock %}
+
+{% block side %}{% endblock %}

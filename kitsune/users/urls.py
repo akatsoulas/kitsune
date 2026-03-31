@@ -2,6 +2,7 @@ from django.conf import settings
 from django.urls import include, re_path
 
 import kitsune.flagit.views
+from kitsune.customercare import views as customercare_views
 from kitsune.users import api, views
 from kitsune.users.models import Profile
 
@@ -14,6 +15,7 @@ api_patterns = [
 detail_patterns = [
     re_path(r"^$", views.profile, name="users.profile"),
     re_path(r"^questions$", views.questions_contributed, name="users.questions"),
+    re_path(r"^questions/(?P<ticket_id>\d+)$", customercare_views.ticket_detail, name="customercare.ticket_detail"),
     re_path(r"^answers$", views.answers_contributed, name="users.answers"),
     re_path(r"^documents$", views.documents_contributed, name="users.documents"),
     re_path(r"^edit$", views.edit_profile, name="users.edit_profile"),

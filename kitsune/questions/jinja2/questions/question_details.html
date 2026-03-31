@@ -1,4 +1,4 @@
-{% extends "questions/base.html" %}
+{% extends "sumo/thread_detail.html" %}
 {% from "layout/errorlist.html" import errorlist %}
 {% from "upload/attachments.html" import attachments_form, attachment %}
 {% from "includes/common_macros.html" import scam_banner, content_editor with context %}
@@ -7,11 +7,15 @@
 {% from "questions/includes/macros.html" import mark_spam_form, unmark_spam_form with context %}
 {% from "questions/includes/aaq_macros.html" import progress_bar, aaq_widget %}
 {% from "karma/includes/karma_macros.html" import titles with context %}
-{% from "users/includes/macros.html" import user_labels %}
+{% from "sumo/includes/thread_post.html" import post_header, thread_meta_rows %}
+
+{% if not scripts %}
+  {% set scripts = ('questions', 'topics') %}
+{% endif %}
 {% set classes = 'answers' %}
 
 {% set product_title = pgettext('DB: products.Product.title', product.title) if product else _('All Products') %}
-{% set logo = pgettext('DB: products.Product.image_alternate_url', product.image_alternate_url) if product else _('no product specified') %}
+{% set logo = pgettext('DB: products.Product.image_alternate_url', product.image_alternate_url) if product else '' %}
 
 {# L10n: {q} is the title of the question. #}
 {% set title = _('{q} | {product} Support Forum')|f(q=question.title, product=product_title) %}
@@ -21,7 +25,6 @@
                  (None, question.title)] %}
 
 {% set canonical_url = canonicalize(model_url=question.get_absolute_url()) %}
-
 {% if answers.number > 1 %}
   {% set canonical_url = canonical_url|urlparams(page=answers.number) %}
 {% endif %}
@@ -39,11 +42,10 @@
 {% endif %}
 
 {% block breadcrumbs %}
-
-{% if aaq_final_step %}
-  {{ progress_bar(4) }}
-{% endif %}
-{{ super() }}
+  {% if aaq_final_step %}
+    {{ progress_bar(4) }}
+  {% endif %}
+  {{ super() }}
 {% endblock %}
 
 {% block above_main %}
@@ -56,528 +58,518 @@
   {% endif %}
 {% endblock %}
 
-{% block content %}
+{# ── Thread notice (scam banner + locked/archived/spam alerts) ──────────── #}
+{% block thread_notice %}
   {{ scam_banner() }}
-  <article>
-    <div id="question-{{ question.id }}" class="question" itemscope itemtype="http://schema.org/Question">
-      {% if question.is_locked or question.is_archived %}
-        <div class="notice mzp-c-notification-bar mzp-t-click">
-          <p>{% if question.is_locked and not question.is_archived %}
-            {{ _('This thread was closed.') }}
-          {% elif not question.is_locked and question.is_archived %}
-            {{ _('This thread was archived.') }}
-          {% else %}
-            {{ _('This thread was closed and archived.') }}
-          {% endif %}
 
-          <a href="{{ url('questions.aaq_step1') }}">
-            {{ _('Please ask a new question if you need help.') }}
-          </a>
-          </p>
-        </div>
+  {% if question.is_locked or question.is_archived %}
+    <div class="thread-detail--notice thread-detail--notice--info">
+      {% if question.is_locked and not question.is_archived %}
+        {{ _('This thread was closed.') }}
+      {% elif not question.is_locked and question.is_archived %}
+        {{ _('This thread was archived.') }}
+      {% else %}
+        {{ _('This thread was closed and archived.') }}
       {% endif %}
-
-      {% if product %}
-      <img class="page-heading--logo" src="{{ logo }}" alt="{{ product_title }} logo" />
-      {% endif %}
-      <h2 class="sumo-callout-heading summary {% if product %}no-product-heading{% endif %}" itemprop="headline">{{ question.title }}</h2>
-
-      <div class="question-meta has-border-bottom">
-        <ul class="forum--meta-details replies">
-          {# L10n: {n} is the number of replies. #}
-          {% if question.num_answers > 0 %}
-          <li>
-            <span class="forum--meta-val">{{ question.num_answers }}</span>
-            <span class="forum--meta-key">
-              {% trans count=question.num_answers %}
-                reply
-                {% pluralize %}
-                replies
-              {% endtrans %}
-            </span>
-          </li>
-          {% else %}
-          <li>
-            <span class="forum--meta-key">{{ _('No replies') }}</span>
-          </li>
-          {% endif %}
-          <li class="border-left-md">
-            <span class="forum--meta-val have-problem">{{ question.num_votes }}</span>
-            <span class="forum--meta-key">
-              {% trans count=question.num_votes %}
-                has this problem
-                {% pluralize %}
-                have this problem
-              {% endtrans %}
-            </span>
-          </li>
-
-          {% if question.num_visits %}
-          <li class="border-left-md">
-            <span class="forum--meta-val visits">{{ question.num_visits }}</span>
-            <span class="forum--meta-key">{% trans count=question.num_visits %}view{% pluralize %}views{% endtrans %}</span>
-          </li>
-          {% endif %}
-
-          {% if question.last_answer %}
-          <li class="border-left-md">
-            <span class="forum--meta-key has-border">{{ _('Last reply by') }}</span>
-            <span class="forum--meta-val visits no-border">
-              <a href="{{ question.last_answer.get_absolute_url() }}">
-                {{ display_name(question.last_answer.creator) }}
-              </a>
-            </span>
-          </li>
-          {% endif %}
-
-          <li class="border-left-md">
-            {% if question.is_solved %}
-              <span class="status-label status-label--resolved">{{ _('Solved') }}</span>
-            {% elif question.is_locked %}
-              <span class="status-label status-label--neutral">{{ _('Locked') }}</span>
-            {% elif question.is_archived %}
-              <span class="status-label status-label--neutral">{{ _('Archived') }}</span>
-            {% else %}
-              <span class="status-label status-label--open">{{ _('Open') }}</span>
-            {% endif %}
-          </li>
-        </ul>
-
-        {% if question.last_answer %}
-        <p class="question-meta--details last-answer-date"><time itemprop="dateModified" datetime="{{ question.last_answer.created }}">{{ question.last_answer.created|timesince }}</time></p>
-        {% endif %}
-
-        {% if question.is_spam %}
-          <p class="is-spam">
-            {% if question.marked_as_spam_by %}
-              {% trans marked_by=question.marked_as_spam_by, marked_time=question.marked_as_spam %}
-                Marked as spam by {{ marked_by }} at {{ marked_time }}
-              {% endtrans %}
-            {% else %}
-              {% trans marked_time=question.marked_as_spam %}
-                Marked as spam at {{ marked_time }}
-              {% endtrans %}
-            {% endif %}
-          </p>
-        {% endif %}
-      </div>
-
-      <section class="avatar-row">
-        <div class="avatar-details user-meta">
-          <div class="avatar">
-            <a rel="nofollow" href="{{ profile_url(question.creator, request.user == question.creator) }}">
-              <img src="{{ profile_avatar(question.creator) }}" height="48" width="48" alt="{{ display_name(question.creator) }}"/>
-            </a>
-          </div>
-          <div class="user">
-            <div class="asked-by">
-              <a class="author-name" rel="nofollow" href="{{ profile_url(question.creator, request.user == question.creator) }}">
-                <span class="display-name">{{ display_name(question.creator) }}</span>
-                {{ user_labels(question.creator) }}
-              </a>
-            </div>
-            <span class="asked-on">
-              <time itemprop="dateCreated" datetime="{{ question.created }}">{{ datetimeformat(question.created) }}</time>
-            </span>
-          </div>
-        </div>
-
-        {% set display_flag_option=question.allows_flag(user) %}
-        {% set display_quote_option=question.allows_new_answer(user) %}
-        {% if display_flag_option or display_quote_option %}
-          <div class="mzp-c-menu-list">
-            <span class="icon-button" data-has-dropdown>{{ _('more options') }}</span>
-            <ul class="mzp-c-menu-list-list">
-              {% if display_flag_option %}
-                <li class="mzp-c-menu-list-item">{{ flag_form(url('questions.flag', question.id), question.id, content_moderation=True) }}</li>
-              {% endif %}
-              {% if display_quote_option %}
-                <li class="mzp-c-menu-list-item"><a class="quoted-reply" href="#question-reply" data-content-id="question-{{ question.id }}">{{ _('Quote') }}</a></li>
-              {% endif %}
-            </ul>
-          </div>
-        {% endif %}
-      </section>
-
-      <div class="main-content">
-        <div itemprop="text" class="content">{{ question.content_parsed|safe }}</div>
-        {# Note: this is not vulnerable to injection because Jinja autoescapes the strings. #}
-        <div class="content-raw">{{ question.content }}</div>
-        {% if question_images %}
-          <div class="attachments-title">
-            {{ _('Attached screenshots') }}
-          </div>
-          <div class="question-attachments attachments-list">
-          {% for image in question_images %}
-            {{ attachment(image, user, False) }}
-          {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if question.updated_by %}
-          <p class="edited text-body-sm"><em>
-            {{ _('Modified {datetime} by {name}')|fe(name=display_name(question.updated_by), datetime=datetimeformat(question.updated, format='longdatetime')) }}
-          </em></p>
-        {% endif %}
-
-        {% if question.solution %}
-          {% set solver = question.solver %}
-          <div class="solution card elevation-00">
-            <h4 class="is-solution" {% if solver %} title="{{ _('Solution chosen by {user}')|f(user=display_name(solver)) }}"{% endif %}>{{ _('Chosen solution') }}
-              <svg class="is-solution--icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path stroke="currentColor" stroke-width="2" d="M20 6L9 17l-5-5" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </h4>
-            <div class="reply">
-              {{ question.solution.content_parsed|safe }}
-              <a class="read-more" href="{{ question.solution.get_absolute_url() }}">{{ _('Read this answer in context') }}</a>
-              <strong class="helpful-count"> 👍 {{ question.solution.num_helpful_votes }}</strong>
-            </div>
-          </div>
-        {% endif %}
-      </div>
-
-      {% if question.editable %}
-        <div class="question-tools sumo-button-wrap align-end">
-          {% if not question.has_voted(request) %}
-            <div class="me-too">
-              <form action="{{ url('questions.vote', question_id=question.id) }}" method="post">
-                {% csrf_token %}
-                <button class="sumo-button button-lg secondary-button" type="submit">{{ _('I have this problem, too') }}</button>
-              </form>
-            </div>
-          {% endif %}
-        </div>
-        {% endif %}
+      <a href="{{ url('questions.aaq_step1') }}">{{ _('Please ask a new question if you need help.') }}</a>
     </div>
+  {% endif %}
 
-    {% if answers.object_list %}
-    <h3 class="sumo-card-heading">{{ _('All Replies')}} ({{ answers.object_list|length }})</h3>
-      {% set helpful_replies = question.helpful_replies %}
-      {% for answer in answers.object_list %}
-        {% include "questions/includes/answer.html" %}
-      {% endfor %}
-      {{ answers|paginator }}
+  {% if question.is_spam %}
+    <div class="thread-detail--notice thread-detail--notice--spam">
+      {% if question.marked_as_spam_by %}
+        {% trans marked_by=question.marked_as_spam_by, marked_time=question.marked_as_spam %}
+          Marked as spam by {{ marked_by }} at {{ marked_time }}
+        {% endtrans %}
+      {% else %}
+        {% trans marked_time=question.marked_as_spam %}
+          Marked as spam at {{ marked_time }}
+        {% endtrans %}
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}
+
+{# ── Product logo ────────────────────────────────────────────────────────── #}
+{% block thread_product_logo %}
+  {% if logo %}
+    <img class="page-heading--logo" src="{{ logo }}" alt="{{ product_title }} logo" />
+  {% endif %}
+{% endblock %}
+
+{# ── Title ───────────────────────────────────────────────────────────────── #}
+{% block thread_title %}{{ question.title }}{% endblock %}
+
+{# ── Meta strip ───────────────────────────────────────────────────────────── #}
+{% block thread_meta %}{{ thread_meta_rows(question) }}{% endblock %}
+
+{# ── Post header: author avatar + actions dropdown ───────────────────────── #}
+{% block thread_post_header %}
+  {% call post_header(
+      author_name=display_name(question.creator),
+      author_url=profile_url(question.creator, request.user == question.creator),
+      avatar_url=profile_avatar(question.creator),
+      created=question.created
+  ) %}
+    {% set display_flag_option = question.allows_flag(user) %}
+    {% set display_quote_option = question.allows_new_answer(user) %}
+    {% if display_flag_option or display_quote_option %}
+      <div class="mzp-c-menu-list">
+        <span class="icon-button" data-has-dropdown>{{ _('more options') }}</span>
+        <ul class="mzp-c-menu-list-list">
+          {% if display_flag_option %}
+            <li class="mzp-c-menu-list-item">
+              {{ flag_form(url('questions.flag', question.id), question.id, content_moderation=True) }}
+            </li>
+          {% endif %}
+          {% if display_quote_option %}
+            <li class="mzp-c-menu-list-item">
+              <a class="quoted-reply" href="#question-reply"
+                 data-content-id="question-{{ question.id }}">{{ _('Quote') }}</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endcall %}
+{% endblock %}
+
+{# ── Post body: parsed content + attachments + edited notice + solution ──── #}
+{% block thread_post_body %}
+  <div id="question-{{ question.id }}" class="question">
+    <div itemprop="text" class="content">{{ question.content_parsed|safe }}</div>
+    {# Not vulnerable to injection — Jinja autoescapes strings. #}
+    <div class="content-raw">{{ question.content }}</div>
+    {% if question_images %}
+      <div class="attachments-title">{{ _('Attached screenshots') }}</div>
+      <div class="question-attachments attachments-list">
+        {% for image in question_images %}
+          {{ attachment(image, user, False) }}
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if question.updated_by %}
+      <p class="edited text-body-sm"><em>
+        {{ _('Modified {datetime} by {name}')|fe(
+              name=display_name(question.updated_by),
+              datetime=datetimeformat(question.updated, format='longdatetime')) }}
+      </em></p>
+    {% endif %}
+    {% if question.solution %}
+      {% set solver = question.solver %}
+      <div class="solution card elevation-00">
+        <h4 class="is-solution"
+            {% if solver %}title="{{ _('Solution chosen by {user}')|f(user=display_name(solver)) }}"{% endif %}>
+          {{ _('Chosen solution') }}
+          <svg class="is-solution--icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-width="2" d="M20 6L9 17l-5-5" fill="none"
+                  fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </h4>
+        <div class="reply">
+          {{ question.solution.content_parsed|safe }}
+        </div>
+        <div class="solution--footer">
+          <span class="solution--vote-count">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 12v3h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
+            <strong>{{ question.solution.num_helpful_votes }}</strong>
+            {{ _('helpful') }}
+          </span>
+          <a class="solution--read-more sumo-button secondary-button button-sm"
+             href="{{ question.solution.get_absolute_url() }}">
+            {{ _('Read this answer in context') }}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{# ── Tools: me-too voting (below post, above replies) ────────────────────── #}
+{% block thread_tools %}
+  {% if question.editable %}
+    <div class="question-tools sumo-button-wrap align-end">
+      {% if not question.has_voted(request) %}
+        <div class="me-too">
+          <form action="{{ url('questions.vote', question_id=question.id) }}" method="post">
+            {% csrf_token %}
+            <button class="sumo-button button-lg secondary-button" type="submit">
+              {{ _('I have this problem, too') }}
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}
+
+{# ── Replies ─────────────────────────────────────────────────────────────── #}
+{% block thread_replies %}
+  {% if answers.object_list %}
+    <h3 class="sumo-card-heading">{{ _('All Replies') }} ({{ question.num_answers }})</h3>
+    {% set helpful_replies = question.helpful_replies %}
+    {% for answer in answers.object_list %}
+      {% include "questions/includes/answer.html" %}
+    {% endfor %}
+    {{ answers|paginator }}
+  {% endif %}
+{% endblock %}
+
+{# ── Reply form ───────────────────────────────────────────────────────────── #}
+{% block thread_reply_form %}
+  <div class="question-reply-form" id="question-reply">
+    {% if request.limited %}
+      <div class="warning-box">
+        {% trans url=url('forums.threads', 'contributors') %}
+          In order to prevent spam, we are limiting the number of answers that
+          can be posted within a short period of time. If you want to post more
+          please create a post on the <a href="{{ url }}">contributors
+          forum</a> requesting that you be white-listed.
+        {% endtrans %}
+      </div>
     {% endif %}
 
-
-    <div class="question-reply-form" id="question-reply">
-      {% if request.limited %}
-        <div class="warning-box">
-          {% trans url=url('forums.threads', 'contributors') %}
-            In order to prevent spam, we are limiting the number of answers that
-            can be posted within a short period of time. If you want to post more
-            please create a post on the <a href="{{ url }}">contributors
-            forum</a> requesting that you be white-listed.
-          {% endtrans %}
-        </div>
-      {% endif %}
-
-      {% if question.allows_new_answer(user) %}
-        <h3 class="sumo-card-heading">{{ _('Post a Reply') }}</h3>
-        <form action="{{ url('questions.reply', question_id=question.id) }}#question-reply" method="post" enctype="multipart/form-data" data-take-question-url="{{ url('question-take', question.pk) }}">
-          {% csrf_token %}
-          {{ errorlist(form) }}
-
-          <div class="main-content">
-            {{ content_editor(form.content, mention_rules=true) }}
-            {% if question.needs_info %}
+    {% if question.allows_new_answer(user) %}
+      <h3 class="sumo-card-heading">{{ _('Post a Reply') }}</h3>
+      <form action="{{ url('questions.reply', question_id=question.id) }}#question-reply"
+            method="post" enctype="multipart/form-data"
+            data-take-question-url="{{ url('question-take', question.pk) }}">
+        {% csrf_token %}
+        {{ errorlist(form) }}
+        <div class="main-content">
+          {{ content_editor(form.content, mention_rules=true) }}
+          {% if question.needs_info %}
             <div class="field checkbox">
-              <input id="id_info_provided" type="checkbox" name="clear_needsinfo" {% if user == question.creator %}checked="checked"{% endif %}>
+              <input id="id_info_provided" type="checkbox" name="clear_needsinfo"
+                     {% if user == question.creator %}checked="checked"{% endif %}>
               <label for="id_info_provided">{{ _('I am providing the requested information') }}</label>
             </div>
-            {% else %}
+          {% else %}
             <div class="field checkbox">
               <input id="id_needs_info" type="checkbox" name="needsinfo">
               <label for="id_needs_info">{{ _('Needs more information from the user') }}</label>
             </div>
-            {% endif %}
-          </div>
-
-          {{ attachments_form('auth.User', user.pk, images, settings, user) }}
-
-          <div class="answer-tools sumo-button-wrap align-end reverse-on-desktop">
-            <button type="submit" class="sumo-button primary-button button-lg"
-              data-event-name="answer_submit"
-              data-event-parameters='{
-                "question_ID": "{{ question.id }}"
-              }'>
-              {{ _('Post Reply') }}
-            </button>
-            <input type="submit" class="sumo-button secondary-button button-lg" id="preview" name="preview" value="{{ _('Preview Reply') }}"
-              data-preview-url="{{ url('questions.answer_preview_async') }}"
-              data-preview-container-id="answer-preview"
-              data-preview-content-id="id_content" />
-          </div>
-        </form>
-      {% elif question.editable and not user.is_authenticated %}
-        <div class="question-tools ask-a-question card is-shaded">
-          {% set ask_url = url('questions.aaq_step1') %}
-          {% if answers.object_list and not question.has_voted(request) %}
-            {# Only show the button again if there are answers in between #}
-            <div class="me-too sumo-button-stack">
-              <a class="sumo-button primary-button button-lg" href="{{ ask_url }}">{{ _('Ask a question') }}</a>
-              <form action="{{ url('questions.vote', question_id=question.id) }}" method="post">
-                {% csrf_token %}
-                <button class="sumo-button secondary-button button-lg" type="submit">{{ _('I have this problem, too') }}</button>
-              </form>
-            </div>
           {% endif %}
-          <p>
-            {{ _('You must <a rel="nofollow" href="{login_url}">log in to your account</a> to reply to posts. Please <a href="{ask_url}">start a new question</a>, if you do not have an account yet.')|fe(login_url=url('users.auth'), ask_url=ask_url) }}
-          </p>
         </div>
-      {% endif %}
-
-      <section id="answer-preview">
-        {% if answer_preview %}
-          {% include "questions/includes/answer_preview.html" %}
+        {{ attachments_form('auth.User', user.pk, images, settings, user) }}
+        <div class="answer-tools sumo-button-wrap align-end reverse-on-desktop">
+          <button type="submit" class="sumo-button primary-button button-lg"
+                  data-event-name="answer_submit"
+                  data-event-parameters='{"question_ID": "{{ question.id }}"}'>
+            {{ _('Post Reply') }}
+          </button>
+          <input type="submit" class="sumo-button secondary-button button-lg"
+                 id="preview" name="preview" value="{{ _('Preview Reply') }}"
+                 data-preview-url="{{ url('questions.answer_preview_async') }}"
+                 data-preview-container-id="answer-preview"
+                 data-preview-content-id="id_content" />
+        </div>
+      </form>
+    {% elif question.editable and not user.is_authenticated %}
+      <div class="question-tools ask-a-question card is-shaded">
+        {% set ask_url = url('questions.aaq_step1') %}
+        {% if answers.object_list and not question.has_voted(request) %}
+          <div class="me-too sumo-button-stack">
+            <a class="sumo-button primary-button button-lg" href="{{ ask_url }}">{{ _('Ask a question') }}</a>
+            <form action="{{ url('questions.vote', question_id=question.id) }}" method="post">
+              {% csrf_token %}
+              <button class="sumo-button secondary-button button-lg" type="submit">
+                {{ _('I have this problem, too') }}
+              </button>
+            </form>
+          </div>
         {% endif %}
-      </section>
-    </div>
-</article>
-{% endblock content %}
+        <p>
+          {{ _('You must <a rel="nofollow" href="{login_url}">log in to your account</a> to reply to posts. Please <a href="{ask_url}">start a new question</a>, if you do not have an account yet.')|fe(login_url=url('users.auth'), ask_url=ask_url) }}
+        </p>
+      </div>
+    {% endif %}
 
+    <section id="answer-preview">
+      {% if answer_preview %}
+        {% include "questions/includes/answer_preview.html" %}
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}
+
+{% block article_attrs %}itemscope itemtype="http://schema.org/Question"{% endblock %}
+
+{# ── Sidebar ─────────────────────────────────────────────────────────────── #}
 {% block side %}
-<div class="search-form-sidebar large-only">
-  {{ search_box(settings, id='support-search-sidebar', params=search_params, placeholder=_('Search Support')) }}
-</div>
+  <div class="search-form-sidebar large-only">
+    {{ search_box(settings, id='support-search-sidebar', params=search_params, placeholder=_('Search Support')) }}
+  </div>
 
-{{ aaq_widget(request, product=product) }}
+  {{ aaq_widget(request, product=product) }}
 
-<div class="questions-sidebar">
-  <nav class="sidebar-nav is-action-list" id="question-tools">
-    <span class="details-heading"></span>
-    <ul class="sidebar-nav--list" id="related-content">
-      <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('Question Tools') }}</li>
-      {% if question.allows_edit(user) %}
-      <li class="edit">
-        <a href="{{ url('questions.edit_question', question.id) }}">{{ _('Edit this question') }}</a>
-      </li>
-      {% endif %}
-      {% if question.allows_delete(user) %}
-      <li class="delete">
-        <a class="delete" href="{{ url('questions.delete', question.id) }}">{{ _('Delete this question') }}</a>
-      </li>
-      {% endif %}
-      {% if question.allows_lock(user) %}
-      <li class="lock">
-        <a data-form="lock-form" data-type="submit">
-            {% if question.is_locked %}{{ _('Unlock this question') }}
-            {% else %}{{ _('Lock this question') }}{% endif %}</a>
-        <form id="lock-form" class="lock" action="{{ url('questions.lock', question.id) }}" method="post">
-          {% csrf_token %}
-        </form>
-      </li>
-      {% endif %}
-      {% if question.allows_archive(user) %}
-      <li class="archive">
-        {% if question.age < 180 * 24 * 60 * 60 %}
-          <a data-form="archive-form" data-type="submit">
-            {% if question.is_archived %}
-              {{ _('Unarchive this question') }}
-            {% else %}
-              {{ _('Archive this question') }}
+  <div class="questions-sidebar">
+    <nav class="sidebar-nav is-action-list" id="question-tools">
+      <span class="details-heading"></span>
+      <ul class="sidebar-nav--list" id="related-content">
+        <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('Question Tools') }}</li>
+        {% if question.allows_edit(user) %}
+          <li class="edit">
+            <a href="{{ url('questions.edit_question', question.id) }}">{{ _('Edit this question') }}</a>
+          </li>
+        {% endif %}
+        {% if question.allows_delete(user) %}
+          <li class="delete">
+            <a class="delete" href="{{ url('questions.delete', question.id) }}">{{ _('Delete this question') }}</a>
+          </li>
+        {% endif %}
+        {% if question.allows_lock(user) %}
+          <li class="lock">
+            <a data-form="lock-form" data-type="submit">
+              {% if question.is_locked %}{{ _('Unlock this question') }}
+              {% else %}{{ _('Lock this question') }}{% endif %}
+            </a>
+            <form id="lock-form" class="lock"
+                  action="{{ url('questions.lock', question.id) }}" method="post">
+              {% csrf_token %}
+            </form>
+          </li>
+        {% endif %}
+        {% if question.allows_archive(user) %}
+          <li class="archive">
+            {% if question.age < 180 * 24 * 60 * 60 %}
+              <a data-form="archive-form" data-type="submit">
+                {% if question.is_archived %}{{ _('Unarchive this question') }}
+                {% else %}{{ _('Archive this question') }}{% endif %}
+              </a>
+              <form id="archive-form" class="archive"
+                    action="{{ url('questions.archive', question.id) }}" method="post">
+                {% csrf_token %}
+              </form>
             {% endif %}
-          </a>
-          <form id="archive-form" class="archive" action="{{ url('questions.archive', question.id) }}" method="post">
-            {% csrf_token %}
-          </form>
+          </li>
         {% endif %}
-      </li>
-      {% endif %}
-      <li class="email">
-        {% if is_watching_question %}
-          <a data-form="unwatch-form" data-type="submit">{{ _('Stop email updates') }}</a>
-          <form id="unwatch-form" class="unwatch" action="{{ url('questions.unwatch', question.id) }}" method="post">
-            {% csrf_token %}
-          </form>
-        {% else %}
-          <a id="email-subscribe-link" href="javascript:;" data-sumo-modal="email-subscribe">{{ _('Get email updates') }}</a>
-          {% include "questions/includes/email_subscribe.html" %}
+        <li class="email">
+          {% if is_watching_question %}
+            <a data-form="unwatch-form" data-type="submit">{{ _('Stop email updates') }}</a>
+            <form id="unwatch-form" class="unwatch"
+                  action="{{ url('questions.unwatch', question.id) }}" method="post">
+              {% csrf_token %}
+            </form>
+          {% else %}
+            <a id="email-subscribe-link" href="javascript:;"
+               data-sumo-modal="email-subscribe">{{ _('Get email updates') }}</a>
+            {% include "questions/includes/email_subscribe.html" %}
+          {% endif %}
+        </li>
+        <li class="rss">
+          <a href="{{ url('questions.answers.feed', question.id) }}">{{ _("Subscribe to feed") }}</a>
+        </li>
+
+        {% if user.has_perm('flagit.can_moderate') %}
+          <li>
+            {% if question.is_spam %}
+              {{ unmark_spam_form(question_id=question.id) }}
+            {% else %}
+              {{ mark_spam_form(question_id=question.id) }}
+            {% endif %}
+          </li>
         {% endif %}
-      </li>
-      <li class="rss">
-        <a href="{{ url('questions.answers.feed', question.id) }}">{{ _("Subscribe to feed") }}</a>
-      </li>
 
-      {% if user.has_perm('flagit.can_moderate') %}
-      <li>
-        {% if question.is_spam %}
-          {{ unmark_spam_form(question_id=question.id) }}
-        {% else %}
-          {{ mark_spam_form(question_id=question.id) }}
-        {% endif %}
-      </li>
-      {% endif %}
-
-      <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('Tags') }}</li>
-      <li id="tags-list">
-        <div class="folder">
-          {% if tags or can_tag %}
-            <div class="sidebox tight cf" id="tags">
-              <div class="tags"{% if can_tag %} data-tag-vocab-json="{{ tag_vocab() }}"{% endif %}>
-
-                {% if can_tag %}
-                  {% if tag_adding_error %}
-                    <p class="tag-error-message">{{ tag_adding_error }}</p>
+        <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('Tags') }}</li>
+        <li id="tags-list">
+          <div class="folder">
+            {% if tags or can_tag %}
+              <div class="sidebox tight cf" id="tags">
+                <div class="tags"{% if can_tag %} data-tag-vocab-json="{{ tag_vocab() }}"{% endif %}>
+                  {% if can_tag %}
+                    {% if tag_adding_error %}
+                      <p class="tag-error-message">{{ tag_adding_error }}</p>
+                    {% endif %}
+                    <form id="tag-adder-form-{{ question.id }}">
+                      <div class="field">
+                        <select id="tag-select-{{ question.id }}" name="tags" multiple
+                                class="tag-select"
+                                data-add-url="{{ url('questions.add_tag_async', question.id) }}"
+                                data-remove-url="{{ url('questions.remove_tag_async', question.id) }}">
+                          {% for tag in all_tags %}
+                            <option value="{{ tag.id }}"
+                                    data-url="{{ url('questions.list', product.slug if product else 'all')|urlparams(tagged=tag.slug) }}"
+                                    {% if tag.id in tag_ids %}selected{% endif %}>
+                              {{ tag.name }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </form>
+                  {% else %}
+                    <ul class="tag-list cf immutable">
+                      {% for tag in tags %}
+                        <li class="tag">
+                          <a class="tag-name"
+                             href="{{ url('questions.list', product.slug if product else 'all')|urlparams(tagged=tag.slug) }}">
+                            {{ tag }}
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
                   {% endif %}
-                  <form id="tag-adder-form-{{ question.id }}">
-                    <div class="field">
-                      <select id="tag-select-{{ question.id }}" name="tags" multiple class="tag-select"
-                              data-add-url="{{ url('questions.add_tag_async', question.id) }}"
-                              data-remove-url="{{ url('questions.remove_tag_async', question.id) }}">
-                        {% for tag in all_tags %}
-                          <option value="{{ tag.id }}"
-                                  data-url="{{ url('questions.list', product.slug if product else 'all')|urlparams(tagged=tag.slug) }}"
-                                  {% if tag.id in tag_ids %}selected{% endif %}>
-                            {{ tag.name }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </li>
+
+        {% if is_trusted_user(request.user) %}
+          <li class="mzp-c-details">
+            <h3 class="sidebar-subheading sidebar-nav--heading-item is-accordion-heading">
+              {{ _('Question Details') }}
+            </h3>
+            <div id="question-details" class="question-details">
+              <form method="post" action="{{ url('questions.edit_details', question.id) }}">
+                <div class="folder">
+                  {% if product or (user and user.has_perm('questions.change_question')) %}
+                    <div class="sidebox tight condensed">
+                      <span class="title">{{ _('Product') }}:</span>
+                      {% if product %}
+                        <span class="detail">{{ pgettext('DB: products.Product.title', product.title) }}</span>
+                      {% endif %}
+                      {% if user and user.has_perm('questions.change_question') %}
+                        <select id="details-product" name="product">
+                          {% for p in all_products %}
+                            <option {% if product and p.id == product.id %}selected="selected"{% endif %}
+                                    value="{{ p.id }}"
+                                    data-url="{{ url('products.product', p.slug) }}">
+                              {{ p.title }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if topic or (user and user.has_perm('questions.change_question')) %}
+                    <div class="sidebox tight condensed">
+                      <span class="title">{{ _('Topic') }}:</span>
+                      {% if topic %}
+                        <span class="detail">{{ pgettext('DB: products.Topic.title', topic.title) }}</span>
+                      {% endif %}
+                      {% if user and user.has_perm('questions.change_question') %}
+                        <select id="details-topic" name="topic">
+                          {% for t in all_topics %}
+                            <option {% if topic and t.id == topic.id %}selected="selected"{% endif %}
+                                    value="{{ t.id }}">
+                              {{ t.title|safe }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if user and user.has_perm('questions.change_question') %}
+                    <div class="sidebox tight condensed" id="question-locale">
+                      <span class="title">{{ _('Locale') }}:</span>
+                      <span class="detail">{{ settings.LANGUAGES_DICT[question.locale.lower()] }}</span>
+                      <select name="locale">
+                        {% for lang in AAQ_LANGUAGES %}
+                          <option {% if question.locale == lang %}selected="selected"{% endif %}
+                                  value="{{ lang }}">
+                            {{ settings.LANGUAGES_DICT[lang.lower()] }}
                           </option>
                         {% endfor %}
                       </select>
                     </div>
-                  </form>
-                {% else %}
-                  <ul class="tag-list cf{% if not can_tag %} immutable{% endif %}">
-                    {% for tag in tags %}
-                      <li class="tag">{# -#}
-                        <a class="tag-name" href="{{ url('questions.list', product.slug if product else 'all')|urlparams(tagged=tag.slug) }}">{{ tag }}</a>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
-        </div>
-      </li>
-      {% if is_trusted_user(request.user) %}
-        <li class="mzp-c-details">
-          <h3 class="sidebar-subheading sidebar-nav--heading-item is-accordion-heading">{{ _('Question Details') }}</h3>
-          <div id="question-details" class="question-details">
-            <form method="post" action="{{ url('questions.edit_details', question.id) }}">
-            <div class="folder">
-              {% if product or (user and user.has_perm('questions.change_question')) %}
-                <div class="sidebox tight condensed">
-                  <span class="title">{{ _('Product') }}:</span>
-                  {% if product %}
-                    <span class="detail">{{ pgettext('DB: products.Product.title', product.title) }}</span>
+                    <div class="sumo-button-wrap">
+                      <button id="details-submit" type="submit"
+                              class="sumo-button button-sm primary-button">
+                        {{ _('Save changes') }}
+                      </button>
+                      <button id="details-cancel" class="sumo-button button-sm">
+                        {{ _('Cancel') }}
+                      </button>
+                    </div>
                   {% endif %}
+
+                  <div class="sidebox tight {% if user and user.has_perm('questions.change_question') %}condensed{% endif %}"
+                       id="system-details">
+                    <span class="title">{{ _('System Details') }}:</span>
+                    {% block system_info %}
+                      <ul class="system">
+                        {% if question.metadata.os %}
+                          <li>{{ question.metadata.os }}</li>
+                        {% endif %}
+                        {% if question.metadata.ff_version %}
+                          <li>Firefox {{ question.metadata.ff_version }}</li>
+                        {% endif %}
+                        {% if question.metadata.tb_version %}
+                          <li>Thunderbird {{ question.metadata.tb_version }}</li>
+                        {% endif %}
+                        {% if question.metadata.device %}
+                          <li>{{ _('Device:') }} {{ question.metadata.device }}</li>
+                        {% endif %}
+                      </ul>
+                    {% endblock %}
+                    <a id="show-more-details" href="javascript:;"
+                       data-sumo-modal="more-system-details">{{ _('More system details') }}</a>
+                    <section data-modal-id="more-system-details"
+                             class="mzp-u-modal-content text-body-md"
+                             title="{{ _('Additional System Details') }}"
+                             data-target="#show-more-details">
+                      <h2 class="sumo-page-subheading">{{ _('Additional System Details') }}</h2>
+                      {% if question.metadata.crash_id %}
+                        <h3 class="sumo-card-heading">{{ crash_id_label }}</h3>
+                        <p>{{ question.metadata.crash_id }}</p>
+                      {% endif %}
+                      {% if question.metadata.frequency %}
+                        <h3 class="sumo-card-heading">{{ frequency_label }}</h3>
+                        <p>{{ frequencies[question.metadata.frequency] }}</p>
+                      {% endif %}
+                      {% if question.metadata.started %}
+                        <h3 class="sumo-card-heading">{{ started_label }}</h3>
+                        <p>{{ question.metadata.started }}</p>
+                      {% endif %}
+                      {% if question.metadata.plugins %}
+                        <h3 class="sumo-card-heading">{{ plugins_label }}</h3>
+                        <p><span class="plugins">
+                          {{ question.metadata.plugins|wiki_to_html_questions }}
+                        </span></p>
+                      {% endif %}
+                      {{ troubleshooting_info(question) }}
+                    </section>
+                  </div>
+
                   {% if user and user.has_perm('questions.change_question') %}
-                    <select id="details-product" name="product">
-                      {% for p in all_products %}
-                        <option {% if product and p.id == product.id %}selected="selected"{% endif %} value="{{ p.id }}" data-url="{{ url('products.product', p.slug) }}">{{ p.title }}</option>
-                      {% endfor %}
-                    </select>
+                    <div class="sidebox tight">
+                      <a href="#" id="details-edit">{{ _('Edit details') }}</a>
+                    </div>
                   {% endif %}
                 </div>
-              {% endif %}
-
-              {% if topic or (user and user.has_perm('questions.change_question')) %}
-                <div class="sidebox tight condensed">
-                  <span class="title">{{ _('Topic') }}:</span>
-                  {% if topic %}
-                    <span class="detail">{{ pgettext('DB: products.Topic.title', topic.title) }}</span>
-                  {% endif %}
-                  {% if user and user.has_perm('questions.change_question') %}
-                    <select id="details-topic" name="topic">
-                      {% for t in all_topics %}
-                        <option {% if topic and t.id == topic.id %}selected="selected"{% endif %} value="{{ t.id }}">{{ t.title|safe }}</option>
-                      {% endfor %}
-                    </select>
-                  {% endif %}
-                </div>
-              {% endif %}
-
-              {% if user and user.has_perm('questions.change_question') %}
-                <div class="sidebox tight condensed" id="question-locale">
-                  <span class="title">{{ _('Locale') }}:</span>
-                  <span class="detail">{{ settings.LANGUAGES_DICT[question.locale.lower()] }}</span>
-                  <select name="locale">
-                    {% for lang in AAQ_LANGUAGES %}
-                      <option {% if question.locale == lang %}selected="selected"{% endif %} value="{{ lang }}">{{ settings.LANGUAGES_DICT[lang.lower()] }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="sumo-button-wrap">
-                  <button id="details-submit" type="submit" class="sumo-button button-sm primary-button">{{ _('Save changes') }}</button>
-                  <button id="details-cancel" class="sumo-button button-sm">{{ _('Cancel') }}</button>
-                </div>
-              {% endif %}
-
-              <div class="sidebox tight {% if user and user.has_perm('questions.change_question') %}condensed{% endif %}" id="system-details">
-                <span class="title">{{ _('System Details') }}:</span>
-                {% block system_info %}
-                  <ul class="system">
-                    {% if question.metadata.os %}
-                      {% set os = question.metadata.os %}
-                      {% set os_lower = os.lower() %}
-                      <li>{{ os }}</li>
-                    {% endif %}
-                    {% if question.metadata.ff_version %}
-                      <li>Firefox {{ question.metadata.ff_version }}</li>
-                    {% endif %}
-                    {% if question.metadata.tb_version %}
-                      <li>Thunderbird {{ question.metadata.tb_version }}</li>
-                    {% endif %}
-                    {% if question.metadata.device %}
-                      <li>{{ _('Device:') }} {{ question.metadata.device }}</li>
-                    {% endif %}
-                  </ul>
-                {% endblock %}
-                <a id="show-more-details" href="javascript:;" data-sumo-modal="more-system-details">{{ _('More system details') }}</a>
-
-                <section data-modal-id="more-system-details" class="mzp-u-modal-content text-body-md" title="{{ _('Additional System Details') }}" data-target="#show-more-details">
-                  <h2 class="sumo-page-subheading">{{ _('Additional System Details') }}</h2>
-                  {% if question.metadata.crash_id %}
-                  <h3 class="sumo-card-heading">{{ crash_id_label }}</h3>
-                  <p>{{ question.metadata.crash_id }}</p>
-                  {% endif %}
-                  {% if question.metadata.frequency %}
-                  <h3 class="sumo-card-heading">{{ frequency_label }}</h3>
-                  <p>{{ frequencies[question.metadata.frequency] }}</p>
-                  {% endif %}
-                  {% if question.metadata.started %}
-                  <h3 class="sumo-card-heading">{{ started_label }}</h3>
-                  <p>{{ question.metadata.started }}</p>
-                  {% endif %}
-                  {% if question.metadata.plugins %}
-                  <h3 class="sumo-card-heading">{{ plugins_label }}</h3>
-                  <p><span class="plugins">
-                    {{ question.metadata.plugins|wiki_to_html_questions }}
-                  </span></p>
-                  {% endif %}
-                  {{ troubleshooting_info(question) }}
-                </section>
-              </div>
-
-              {% if user and user.has_perm('questions.change_question') %}
-                <div class="sidebox tight">
-                  <a href="#" id="details-edit">{{ _('Edit details') }}</a>
-                </div>
-              {% endif %}
-            </div>
-            {% csrf_token %}
-            </form>
+                {% csrf_token %}
+              </form>
             </div>
           </li>
         {% endif %}
 
         {% if related_documents or related_questions %}
-        <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('See also') }}</li>
-        {% for q in related_questions %}
-        <li class="related-question">
-          <a href="{{ q.url }}">{{ q.title }}</a>
-        </li>
-        {% endfor %}
-        {% for d in related_documents %}
-        <li class="related-document">
-          <a href="{{ d.url}}">{{ d.title }}</a>
-        </li>
-        {% endfor %}
+          <li class="sidebar-subheading sidebar-nav--heading-item">{{ _('See also') }}</li>
+          {% for q in related_questions %}
+            <li class="related-question">
+              <a href="{{ q.url }}">{{ q.title }}</a>
+            </li>
+          {% endfor %}
+          {% for d in related_documents %}
+            <li class="related-document">
+              <a href="{{ d.url }}">{{ d.title }}</a>
+            </li>
+          {% endfor %}
         {% endif %}
-    </ul>
-  </nav>
-</div>
-{% endblock side %}
+      </ul>
+    </nav>
+  </div>
+{% endblock %}

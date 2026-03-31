@@ -643,56 +643,89 @@
   background-color: var(--color-warning);
 }
 
-.answer-tools {
-  &.align-end {
-    display: flex;
-    justify-content: flex-end;
+// Answer footer: full-width bar separating the post body from reactions + actions
+.answer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: p.$spacing-md;
+  padding-top: p.$spacing-md;
+  margin-top: p.$spacing-lg;
+  border-top: 1px solid var(--color-light-gray-04);
+}
+
+.answer-footer--actions {
+  display: flex;
+  align-items: center;
+  gap: p.$spacing-sm;
+}
+
+// Inline vote form: "Helpful? [👍 N] [👎 N]"
+.answer-vote {
+  display: flex;
+  align-items: center;
+  gap: p.$spacing-xs;
+}
+
+.answer-vote--label {
+  @include c.text-body-sm;
+  color: var(--color-text-light);
+  margin-inline-end: p.$spacing-xs;
+}
+
+.answer-vote--btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px p.$spacing-sm;
+  border: 1px solid var(--color-light-gray-04);
+  border-radius: 2em;
+  background: transparent;
+  cursor: pointer;
+  @include c.text-body-sm;
+  color: var(--color-text-light);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
+
+  &:hover:not([disabled]) {
+    color: var(--color-link);
+    border-color: var(--color-link);
+    background-color: rgba(var(--color-link-rgb, 0, 96, 223), 0.06);
+  }
+
+  &[disabled] {
+    opacity: 0.65;
+    cursor: default;
+  }
+}
+
+.answer-vote--count {
+  @include c.text-body-sm;
+  font-weight: 600;
 }
 
 .answer {
   padding: p.$spacing-2xl 0;
   border-bottom: 1px solid var(--color-border);
 
-  &--tools {
-    display: flex;
-    flex-direction: column;
-    background: var(--color-shade-bg);
-    border-radius: 0 var(--global-radius) var(--global-radius) 0;
-    padding: p.$spacing-sm;
-    margin-top: -1px;
-    margin-bottom: p.$spacing-md;
-    border-bottom: 1px solid var(--color-border);
-
-    .title {
-      margin: 0 p.$spacing-md 0 0;
-    }
-  }
-
-  &--tools-form {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-
-    .solution {
-      display: flex;
-      align-items: center;
-    }
-  }
-
   @media #{p.$mq-md} {
-    &--tools {
-      flex-direction: row-reverse;
-      padding-left: 55px;
-    }
-
-    &--tools-form {
-      margin-bottom: 0;
-    }
-
     .main-content {
       padding-left: 55px;
     }
+  }
+}
+
+.answer-tools--solve-btn {
+  svg {
+    width: 14px;
+    height: 14px;
+    margin-inline-end: p.$spacing-xs;
+    flex-shrink: 0;
   }
 }
 
@@ -721,7 +754,7 @@
   }
 }
 
-.main-content .solution {
+.thread-post--body .solution {
   position: relative;
   margin-top: 60px;
   padding-top: 36px;
@@ -730,6 +763,50 @@
   .is-solution {
     top: -12px;
     position: absolute;
+  }
+}
+
+.solution--footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: p.$spacing-md;
+  flex-wrap: wrap;
+  padding-top: p.$spacing-sm;
+  margin-top: p.$spacing-md;
+  border-top: 1px solid var(--color-light-gray-04);
+}
+
+.solution--vote-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  @include c.text-body-sm;
+  color: var(--color-text-light);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--color-success);
+    stroke: var(--color-success);
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.solution--read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: p.$spacing-xs;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
 }
 

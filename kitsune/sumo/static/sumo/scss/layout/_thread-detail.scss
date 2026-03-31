@@ -1,0 +1,179 @@
+@use '../config' as c;
+@use 'protocol/css/includes/lib' as p;
+
+// Shared header for ticket and question detail pages
+.thread-detail--header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: p.$spacing-xs p.$spacing-sm;
+  padding-bottom: p.$spacing-lg;
+  border-bottom: 1px solid var(--color-light-gray-04);
+  margin-bottom: p.$spacing-xl;
+}
+
+.thread-detail--title {
+  @include c.text-display-xs;
+  margin: 0 0 p.$spacing-md;
+  width: 100%;
+}
+
+.thread-detail--meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: p.$spacing-xs p.$spacing-sm;
+  @include c.text-body-xs;
+  color: var(--color-text-light);
+  width: 100%;
+}
+
+// Single post component (question body / ticket description / comments)
+.thread-post {
+  padding: p.$spacing-xl 0;
+  border-bottom: 1px solid var(--color-light-gray-04);
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.thread-post--header {
+  display: flex;
+  align-items: center;
+  gap: p.$spacing-md;
+  margin-bottom: p.$spacing-md;
+}
+
+.thread-post--avatar {
+  flex-shrink: 0;
+
+  img {
+    border-radius: 50%;
+    display: block;
+  }
+}
+
+.thread-post--author {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thread-post--author-name {
+  @include c.text-body-md;
+  font-weight: bold;
+  color: var(--color-heading);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.thread-post--time {
+  @include c.text-body-xs;
+  color: var(--color-text-light);
+}
+
+.thread-post--actions {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+}
+
+.thread-post--body {
+  @include c.text-body-lg;
+  color: var(--color-text);
+  word-break: break-word;
+
+  p {
+    margin: 0 0 p.$spacing-md;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Comments section
+.thread-comments--empty {
+  padding: p.$spacing-xl 0;
+  @include c.text-body-md;
+  color: var(--color-text-light);
+}
+
+// Reuse listing row components inside the meta strip.
+// question-entry--meta / question-entry--extras are flex rows in the listing (grid context);
+// here they need width: 100% to break onto their own line inside the flex-wrap container.
+.thread-detail--meta > .question-entry--meta,
+.thread-detail--meta > .question-entry--extras {
+  width: 100%;
+}
+
+// Stat pill — reply count, vote count, view count in the meta strip
+// Matches the visual language of .question-entry--meta-item from the listing
+.thread-detail--stat {
+  display: inline-flex;
+  align-items: center;
+  gap: p.$spacing-xs;
+  @include c.text-body-xs;
+  color: var(--color-text-light);
+
+  svg {
+    width: p.$spacing-md;
+    height: p.$spacing-md;
+    flex-shrink: 0;
+  }
+}
+
+// Linked meta item — product, topic, last-reply links in the meta strip
+.thread-detail--meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: p.$spacing-xs;
+  @include c.text-body-xs;
+  color: var(--color-text-light);
+  text-decoration: none;
+
+  svg {
+    width: p.$spacing-md;
+    height: p.$spacing-md;
+    flex-shrink: 0;
+  }
+
+  &[href]:hover {
+    color: var(--color-link);
+    text-decoration: underline;
+  }
+}
+
+// Alert notice inside thread — locked, archived, spam
+.thread-detail--notice {
+  display: flex;
+  align-items: center;
+  gap: p.$spacing-sm;
+  padding: p.$spacing-sm p.$spacing-md;
+  border-radius: p.$border-radius-sm;
+  margin-bottom: p.$spacing-xl;
+  @include c.text-body-sm;
+
+  &--info {
+    background: rgba(c.color('blue', '06'), 0.08);
+    color: var(--color-link);
+  }
+
+  &--spam {
+    background: rgba(c.color('yellow', '04'), 0.2);
+    color: c.color('orange', '08');
+  }
+}
+
+// Replies section heading row
+.thread-replies > h2,
+.thread-replies > h3 {
+  padding-top: p.$spacing-xl;
+  margin-bottom: p.$spacing-lg;
+}

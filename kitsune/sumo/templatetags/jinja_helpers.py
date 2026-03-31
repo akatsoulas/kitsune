@@ -443,6 +443,22 @@ def remove(list_, item):
     return [i for i in list_ if i != item]
 
 
+@library.filter
+def parse_datetime(value):
+    """Parse an ISO 8601 datetime string into a datetime object.
+
+    Used to format raw datetime strings from external APIs (e.g. Zendesk
+    comment timestamps) via datetimeformat().  Returns None on failure so
+    callers can fall back gracefully.
+    """
+    if not value:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+
+
 @jinja2.pass_context
 @library.global_function
 def is_secure(context):
