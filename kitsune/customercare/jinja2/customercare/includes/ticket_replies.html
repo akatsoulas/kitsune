@@ -1,0 +1,48 @@
+{% from "sumo/includes/thread_post.html" import post_body %}
+
+{% if sync_error %}
+  <div class="thread-detail--notice thread-detail--notice--info">
+    {{ _('We could not fetch the latest replies. Please try again later.') }}
+  </div>
+{% endif %}
+
+{% if ticket.comments %}
+  <h2 class="sumo-card-heading">
+    {% trans count=ticket.comments | length %}
+      {{ count }} Reply
+    {% pluralize %}
+      {{ count }} Replies
+    {% endtrans %}
+  </h2>
+  {% for comment in ticket.comments %}
+    {% if comment.get("public", True) %}
+      {% set _author = comment.get("author", {}) %}
+      {% set _created_str = comment.get("created_at", "") %}
+      {% set _created_dt = _created_str | parse_datetime %}
+      <div class="thread-post" id="comment-{{ comment.get('id', loop.index) }}">
+        <div class="thread-post--header">
+          <div class="thread-post--avatar">
+            <div class="question-entry--icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="thread-post--author">
+            <span class="thread-post--author-name">{{ _author.get("name", _("Support Agent")) }}</span>
+            {% if _created_dt %}
+              <time class="thread-post--time" datetime="{{ _created_str }}">
+                {{ datetimeformat(_created_dt, use_timesince=True) }}
+              </time>
+            {% endif %}
+          </div>
+        </div>
+        {{ post_body(comment.get("body", "") | e | replace('\n', '<br>') | safe) }}
+      </div>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <p class="thread-comments--empty">{{ _("No replies yet.") }}</p>
+{% endif %}

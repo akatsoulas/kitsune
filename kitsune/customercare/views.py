@@ -1,13 +1,19 @@
 import json
+import logging
+from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from kitsune.customercare.models import SupportTicket
-from kitsune.customercare.utils import generate_classification_tags
+from kitsune.customercare.utils import generate_classification_tags, sync_ticket_from_zendesk
 from kitsune.products.models import Topic
+
+log = logging.getLogger("k.customercare")
 
 
 @login_required
@@ -17,11 +23,27 @@ def ticket_detail(request, username, ticket_id):
         id=ticket_id,
         user__username=username,
     )
-    is_owner = ticket.user_id == request.user.id
-    can_moderate = request.user.has_perm("customercare.change_supportticket")
-    if not (is_owner or can_moderate):
+    if not (ticket.user_id == request.user.id or request.user.has_perm("customercare.change_supportticket")):
         raise Http404
-    return render(request, "customercare/ticket_detail.html", {"ticket": ticket})
+
+    if request.headers.get("HX-Request"):
+        sync_error = False
+        try:
+            sync_ticket_from_zendesk(ticket)
+        except Exception:
+            log.exception("Failed to sync ticket %s from Zendesk", ticket.zendesk_ticket_id)
+            sync_error = True
+        return render(request, "customercare/includes/ticket_replies.html",
+                      {"ticket": ticket, "sync_error": sync_error})
+
+    threshold = timedelta(seconds=settings.ZENDESK_COMMENTS_SYNC_THRESHOLD)
+    needs_sync = bool(ticket.zendesk_ticket_id) and (
+        ticket.last_synced_at is None or ticket.last_synced_at < timezone.now() - threshold
+    )
+    return render(request, "customercare/ticket_detail.html", {
+        "ticket": ticket,
+        "needs_sync": needs_sync,
+    })
 
 
 @require_POST

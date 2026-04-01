@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
@@ -53,3 +55,40 @@ class TicketDetailViewTests(TestCase):
         self.client.force_login(self.owner)
         response = self.client.get(reverse("customercare.ticket_detail", args=[self.owner.username, self.ticket.id]))
         self.assertContains(response, 'class="status-label')
+
+
+class SyncTicketCommentsViewTests(TestCase):
+    def setUp(self):
+        self.owner = UserFactory()
+        self.other = UserFactory()
+        self.ticket = SupportTicketFactory(user=self.owner, zendesk_ticket_id="123")
+
+    def _url(self):
+        return reverse("customercare.ticket_detail", args=[self.owner.username, self.ticket.id])
+
+    def _htmx_get(self):
+        return self.client.get(self._url(), HTTP_HX_REQUEST="true")
+
+    @patch("kitsune.customercare.views.sync_ticket_from_zendesk")
+    def test_htmx_request_triggers_sync_and_returns_partial(self, mock_sync):
+        self.client.force_login(self.owner)
+        response = self._htmx_get()
+        self.assertEqual(200, response.status_code)
+        mock_sync.assert_called_once_with(self.ticket)
+
+    @patch("kitsune.customercare.views.sync_ticket_from_zendesk")
+    def test_zd_failure_returns_error_partial(self, mock_sync):
+        mock_sync.side_effect = Exception("ZD unreachable")
+        self.client.force_login(self.owner)
+        response = self._htmx_get()
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "latest replies")
+
+    def test_non_owner_htmx_gets_404(self):
+        self.client.force_login(self.other)
+        response = self._htmx_get()
+        self.assertEqual(404, response.status_code)
+
+    def test_anonymous_htmx_redirects(self):
+        response = self._htmx_get()
+        self.assertEqual(302, response.status_code)

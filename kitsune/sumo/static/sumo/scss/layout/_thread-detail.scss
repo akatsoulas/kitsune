@@ -177,3 +177,28 @@
   padding-top: p.$spacing-xl;
   margin-bottom: p.$spacing-lg;
 }
+
+// Loading state for async comment fetch
+.thread-detail--loading {
+  display: flex;
+  align-items: center;
+  gap: p.$spacing-sm;
+  padding: p.$spacing-xl 0;
+  @include c.text-body-md;
+  color: var(--color-text-light);
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

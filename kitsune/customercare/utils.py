@@ -2,6 +2,7 @@ import re
 from typing import Any, cast
 
 import waffle
+from django.utils import timezone
 from zenpy.lib.exception import APIException
 
 from kitsune.customercare import ZENDESK_CATEGORIES, ZENDESK_LEGACY_MAPPING
@@ -13,6 +14,28 @@ from kitsune.llm.spam.classifier import ModerationAction
 from kitsune.products.models import ProductSupportConfig, Topic
 from kitsune.questions.utils import flag_object
 from kitsune.users.models import Profile
+
+
+def sync_ticket_from_zendesk(ticket: SupportTicket) -> None:
+    """Fetch fresh ticket status and comments from Zendesk and save to DB."""
+    client = ZendeskClient()
+    zd_ticket = client.get_ticket(ticket.zendesk_ticket_id)
+    zd_comments = client.get_ticket_comments(ticket.zendesk_ticket_id)
+
+    ticket.zd_status = zd_ticket.status
+    ticket.zd_updated_at = zd_ticket.updated_at
+    ticket.comments = [
+        {
+            "id": c.id,
+            "body": c.body,
+            "created_at": c.created_at,
+            "public": c.public,
+            "author": {"name": c.author.name, "id": c.author.id},
+        }
+        for c in zd_comments
+    ]
+    ticket.last_synced_at = timezone.now()
+    ticket.save(update_fields=["zd_status", "zd_updated_at", "comments", "last_synced_at"])
 
 
 def _topic_to_tag(text: str) -> str:

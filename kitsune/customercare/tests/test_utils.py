@@ -1,13 +1,16 @@
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
+from django.utils import timezone
 from zenpy.lib.exception import APIException
 
 from kitsune.customercare.models import SupportTicket
+from kitsune.customercare.tests import SupportTicketFactory
 from kitsune.customercare.utils import (
     _topic_to_tag,
     generate_classification_tags,
     process_zendesk_classification_result,
     send_support_ticket_to_zendesk,
+    sync_ticket_from_zendesk,
 )
 from kitsune.llm.spam.classifier import ModerationAction
 from kitsune.products.tests import (
@@ -351,3 +354,52 @@ class ProcessZendeskClassificationResultTests(TestCase):
         self.assertIn("seg-rel-esr", self.submission.zendesk_tags)
         self.assertIn("seg-policy-windows-gpo", self.submission.zendesk_tags)
         self.assertIn("loginless_ticket", self.submission.zendesk_tags)
+
+
+class SyncTicketFromZendeskTests(TestCase):
+    def setUp(self):
+        self.ticket = SupportTicketFactory(zendesk_ticket_id="123")
+
+    @patch("kitsune.customercare.utils.ZendeskClient")
+    def test_updates_comments(self, mock_client_cls):
+        mock_client = mock_client_cls.return_value
+        mock_comment = MagicMock()
+        mock_comment.id = 1
+        mock_comment.body = "Hello"
+        mock_comment.created_at = "2025-01-01T00:00:00Z"
+        mock_comment.public = True
+        mock_comment.author.name = "Agent"
+        mock_comment.author.id = 99
+        mock_client.get_ticket_comments.return_value = [mock_comment]
+        mock_zd_ticket = MagicMock()
+        mock_zd_ticket.status = "open"
+        mock_zd_ticket.updated_at = timezone.now()
+        mock_client.get_ticket.return_value = mock_zd_ticket
+
+        sync_ticket_from_zendesk(self.ticket)
+
+        self.ticket.refresh_from_db()
+        self.assertEqual(len(self.ticket.comments), 1)
+        self.assertEqual(self.ticket.comments[0]["body"], "Hello")
+        self.assertEqual(self.ticket.comments[0]["author"]["name"], "Agent")
+        self.assertEqual(self.ticket.zd_status, "open")
+        self.assertIsNotNone(self.ticket.last_synced_at)
+
+    @patch("kitsune.customercare.utils.ZendeskClient")
+    def test_filters_private_comments(self, mock_client_cls):
+        """Private comments are stored but marked; template already filters them."""
+        mock_client = mock_client_cls.return_value
+        mock_comment = MagicMock()
+        mock_comment.public = False
+        mock_comment.id = 2
+        mock_comment.body = "Internal note"
+        mock_comment.created_at = "2025-01-01T00:00:00Z"
+        mock_comment.author.name = "Agent"
+        mock_comment.author.id = 99
+        mock_client.get_ticket_comments.return_value = [mock_comment]
+        mock_client.get_ticket.return_value = MagicMock(status="open", updated_at=timezone.now())
+
+        sync_ticket_from_zendesk(self.ticket)
+
+        self.ticket.refresh_from_db()
+        self.assertFalse(self.ticket.comments[0]["public"])

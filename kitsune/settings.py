@@ -1236,6 +1236,7 @@ ZENDESK_UPDATE_CHANNEL_FIELD_ID = config(
 ZENDESK_POLICY_DISTRIBUTION_FIELD_ID = config(
     "ZENDESK_POLICY_DISTRIBUTION_FIELD_ID", default="45939778070036", cast=int
 )
+ZENDESK_COMMENTS_SYNC_THRESHOLD = config("ZENDESK_COMMENTS_SYNC_THRESHOLD", default=3600, cast=int)
 
 # Products that allow un-authenticated users to submit support requests
 LOGIN_EXCEPTIONS = frozenset(["mozilla-account"])
