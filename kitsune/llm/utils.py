@@ -2,9 +2,9 @@ from functools import lru_cache, reduce
 from typing import Any
 
 from langchain.chat_models.base import BaseChatModel
-from langchain.schema.output_parser import OutputParserException
-from langchain.schema.runnable import Runnable, RunnableLambda
-from langchain.schema.runnable.base import RunnableLike, coerce_to_runnable
+from langchain_core.exceptions import OutputParserException
+from langchain_core.runnables import Runnable, RunnableLambda
+from langchain_core.runnables.base import RunnableLike, coerce_to_runnable
 
 DEFAULT_LLM_MODEL = "gemini-2.5-flash"
 

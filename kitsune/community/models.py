@@ -1,3 +1,5 @@
+from typing import override
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -53,6 +55,7 @@ class DeletedContribution(models.Model):
         elif self.content_type == ContentType.objects.get_for_model(Document):
             DocumentMetadata(**self.metadata)
 
+    @override
     def save(self, *args, **kwargs):
         self.validate_metadata()
         super().save(*args, **kwargs)

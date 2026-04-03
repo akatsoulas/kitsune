@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, override
 
 from django.db.models import Manager
 
 
 class NonArchivedManager(Manager):
+    @override
     def get_queryset(self):
         # Filter out archived objects by default.
         return super().get_queryset().filter(is_archived=False)

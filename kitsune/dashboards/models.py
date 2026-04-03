@@ -1,3 +1,4 @@
+import itertools
 import logging
 
 from django.db import IntegrityError, models, transaction
@@ -8,7 +9,6 @@ from kitsune.dashboards import PERIODS
 from kitsune.products.models import Product
 from kitsune.sumo import googleanalytics
 from kitsune.sumo.models import LocaleField, ModelBase
-from kitsune.sumo.utils import chunked
 from kitsune.wiki.models import Document
 
 log = logging.getLogger("k.dashboards")
@@ -82,7 +82,7 @@ class WikiDocumentVisits(ModelBase):
             # Let's create the fresh instances in batches, so we avoid exposing ourselves to
             # the possibility of transgressing some query size limit.
             batch_size = 1000
-            for batch_of_pairs in chunked(list(instance_by_locale_and_slug), batch_size):
+            for batch_of_pairs in itertools.batched(instance_by_locale_and_slug, batch_size, strict=False):
                 locale_and_slug_queries = Q()
                 for locale, slug in batch_of_pairs:
                     locale_and_slug_queries |= Q(locale=locale, slug=slug)

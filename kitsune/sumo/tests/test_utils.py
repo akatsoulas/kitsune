@@ -9,7 +9,6 @@ from parameterized import parameterized
 from kitsune.journal.models import Record
 from kitsune.sumo.tests import TestCase
 from kitsune.sumo.utils import (
-    chunked,
     get_aaq_url,
     get_browser,
     get_next_url,
@@ -145,24 +144,6 @@ class JSONTests(TestCase):
         d = {"formula": "A=πr²"}
         trunc = truncated_json_dumps(d, 25, "formula")
         self.assertEqual(json.dumps(d, ensure_ascii=False), trunc)
-
-
-class ChunkedTests(TestCase):
-    def test_chunked(self):
-        # chunking nothing yields nothing.
-        self.assertEqual(list(chunked([], 1)), [])
-
-        # chunking list where len(list) < n
-        self.assertEqual(list(chunked([1], 10)), [[1]])
-
-        # chunking a list where len(list) == n
-        self.assertEqual(list(chunked([1, 2], 2)), [[1, 2]])
-
-        # chunking list where len(list) > n
-        self.assertEqual(list(chunked([1, 2, 3, 4, 5], 2)), [[1, 2], [3, 4], [5]])
-
-        # passing in a length overrides the real len(list)
-        self.assertEqual(list(chunked([1, 2, 3, 4, 5, 6, 7], 2, length=4)), [[1, 2], [3, 4]])
 
 
 class IsRatelimitedTest(TestCase):

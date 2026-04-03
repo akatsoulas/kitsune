@@ -1,3 +1,5 @@
+from typing import override
+
 from django.conf import settings
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -36,6 +38,7 @@ class DocumentList(LocaleNegotiationMixin, generics.ListAPIView):
 
     serializer_class = DocumentShortSerializer
 
+    @override
     def get_queryset(self):
         locales = self.request.query_params.get("locales")
         if locales:
@@ -97,6 +100,7 @@ class DocumentList(LocaleNegotiationMixin, generics.ListAPIView):
 class DocumentDetail(LocaleNegotiationMixin, generics.RetrieveAPIView):
     serializer_class = DocumentDetailSerializer
 
+    @override
     def get_object(self):
         locale = normalize_language(self.get_locale())
         queryset = Document.objects.visible(self.request.user, locale=locale)

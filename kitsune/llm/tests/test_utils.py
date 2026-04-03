@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from langchain.schema.output_parser import OutputParserException
+from langchain_core.exceptions import OutputParserException
 
 from kitsune.llm.utils import build_chain_with_retry
 from kitsune.sumo.tests import TestCase

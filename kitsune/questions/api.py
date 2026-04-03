@@ -1,4 +1,5 @@
 import json
+from typing import override
 
 import actstream.actions
 import django_filters
@@ -150,6 +151,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     def get_tags(self, obj):
         return [{"name": tag.name, "slug": tag.slug} for tag in obj.tags.all()]
 
+    @override
     def validate(self, data):
         user = self.context.get("request").user
         if user and not user.is_anonymous and data.get("creator") is None:

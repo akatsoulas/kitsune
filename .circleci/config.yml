@@ -50,7 +50,7 @@ commands:
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.11-node
+      - image: cimg/python:3.14-node
     steps:
       - checkout:
          method: blobless
@@ -65,28 +65,28 @@ jobs:
 
   wiki-tests:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - run-tests-no-es:
           app_labels: kitsune.wiki kitsune.kbforums
 
   questions-tests:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - run-tests-with-es:
           app_labels: kitsune.questions
 
   elasticsearch-tests:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - run-tests-with-es:
           app_labels: kitsune.search kitsune.community kitsune.products kitsune.landings
 
   kitsune-tests:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - run-tests-no-es:
           app_labels: >-
@@ -98,7 +98,7 @@ jobs:
 
   test-js:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - checkout:
          method: blobless

@@ -1,4 +1,3 @@
-import imghdr
 import json
 import logging
 
@@ -14,6 +13,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
+from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
 
 from kitsune.access.decorators import login_required
 from kitsune.gallery import ITEMS_PER_PAGE
@@ -250,8 +251,9 @@ def _get_media_info(media_id, media_type):
     if media_type == "image":
         media = get_object_or_404(Image, pk=media_id)
         try:
-            media_format = imghdr.what(media.file.file)
-        except UnicodeEncodeError:
+            with PILImage.open(media.file.file) as img:
+                media_format = img.format.lower() if img.format else None
+        except (UnidentifiedImageError, OSError):
             pass
     elif media_type == "video":
         media = get_object_or_404(Video, pk=media_id)

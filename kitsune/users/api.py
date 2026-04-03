@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 from importlib import import_module
+from typing import override
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
@@ -39,9 +40,11 @@ def display_name_or_none(user):
 
 
 class TimezoneField(serializers.Field):
+    @override
     def to_representation(self, obj):
         return force_str(obj)
 
+    @override
     def to_internal_value(self, data):
         try:
             return ZoneInfo(str(data))

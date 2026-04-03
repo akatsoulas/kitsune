@@ -2,6 +2,7 @@
 # https://github.com/mozilla/django-badger/blob/master/badger/models.py
 
 import re
+from typing import override
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -226,6 +227,7 @@ class Badge(models.Model):
     def get_upload_meta(self):
         return ("badge", self.slug)
 
+    @override
     def save(self, **kwargs):
         """Save the submission, updating slug and screenshot thumbnails"""
         if not self.slug:
@@ -233,6 +235,7 @@ class Badge(models.Model):
 
         super().save(**kwargs)
 
+    @override
     def delete(self, **kwargs):
         """Make sure deletes cascade to awards"""
         self.award_set.all().delete()
@@ -370,6 +373,7 @@ class Award(models.Model):
             return True
         return False
 
+    @override
     def save(self, *args, **kwargs):
         # Signals and some bits of logic only happen on a new award.
         is_new = not self.pk
@@ -389,5 +393,6 @@ class Award(models.Model):
             # TODO: we might not need this as there are no more notifications
             badge_was_awarded.send(sender=self.__class__, award=self)
 
+    @override
     def delete(self):
         super().delete()

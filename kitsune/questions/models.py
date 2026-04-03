@@ -1,8 +1,10 @@
+import itertools
 import json
 import logging
 import re
 from datetime import timedelta
 from functools import cached_property
+from typing import override
 from urllib.parse import urlparse
 
 import actstream
@@ -33,7 +35,6 @@ from kitsune.sumo.models import LocaleField, ModelBase
 from kitsune.sumo.parser import BASE_ALLOWED_ATTRIBUTES
 from kitsune.sumo.templatetags.jinja_helpers import urlparams, wiki_to_html
 from kitsune.sumo.urlresolvers import reverse
-from kitsune.sumo.utils import chunked
 from kitsune.tags.models import BigVocabTaggableManager, SumoTag
 from kitsune.upload.models import ImageAttachment
 
@@ -188,6 +189,7 @@ class Question(AAQBase):
     def clear_cached_contributors(self):
         cache.delete(self.contributors_cache_key % self.id)
 
+    @override
     def save(self, update=False, *args, **kwargs):
         """Override save method to take care of updated if requested."""
 
@@ -853,7 +855,7 @@ class QuestionVisits(ModelBase):
 
                 # Let's create the fresh instances in batches of 1K, so we avoid exposing
                 # ourselves to the possibility of transgressing some query size limit.
-                for batch_of_question_ids in chunked(question_ids, 1000):
+                for batch_of_question_ids in itertools.batched(question_ids, 1000, strict=False):
                     if verbose:
                         log.info(f"Creating a batch of {len(batch_of_question_ids)} instances...")
 
@@ -942,6 +944,7 @@ class Answer(AAQBase):
     def content_parsed(self):
         return _content_parsed(self, self.question.locale)
 
+    @override
     def save(self, update=True, no_notify=False, *args, **kwargs):
         """
         Override save method to update question info and take care of
@@ -988,6 +991,7 @@ class Answer(AAQBase):
                     self.creator, self.question, send_action=False, actor_only=False
                 )
 
+    @override
     def delete(self, *args, **kwargs):
         """Override delete method to update parent question info."""
         from kitsune.questions.tasks import update_answer_pages

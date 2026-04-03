@@ -1,3 +1,5 @@
+from typing import override
+
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _lazy
@@ -72,6 +74,7 @@ class TopicDetail(LocaleNegotiationMixin, generics.RetrieveAPIView):
     queryset = Topic.active.all()
     serializer_class = TopicSerializer
 
+    @override
     def get_object(self):
         queryset = self.get_queryset()
         queryset = queryset.filter(
@@ -110,6 +113,7 @@ class TopicList(LocaleNegotiationMixin, generics.ListAPIView):
     queryset = Topic.active.filter(parent=None)
     serializer_class = RootTopicSerializer
 
+    @override
     def get_queryset(self):
         queryset = self.queryset.filter(products__slug=self.kwargs["product"])
         visible = bool(self.request.query_params.get("visible", True))

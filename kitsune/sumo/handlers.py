@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
 class AbstractHandler(ABC):
@@ -15,7 +12,7 @@ class AbstractHandler(ABC):
 
 
 @dataclass
-class AbstractChain(Generic[T]):
+class AbstractChain[T]:
     """Abstract base class for a chain of handlers."""
 
     _handlers: list[T] = field(default_factory=list)

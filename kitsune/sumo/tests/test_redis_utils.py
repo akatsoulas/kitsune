@@ -8,6 +8,14 @@ from kitsune.sumo.redis_utils import RateLimit, RedisError
 from kitsune.sumo.tests import TestCase
 
 
+def _rate_limited_task(shared_counter, shared_counter_lock):
+    """Worker function for multi-process testing."""
+    rate_limit = RateLimit(key="test-key", rate="5/sec", wait_period=0.1, max_wait_period=2)
+    if not rate_limit.is_rate_limited():
+        with shared_counter_lock:
+            shared_counter.value += 1
+
+
 class TestRateLimit(TestCase):
     def setUp(self):
         self.key = "test-key"
@@ -72,16 +80,13 @@ class TestRateLimit(TestCase):
         # Create a lock to ensure safe increments of the shared counter.
         shared_counter_lock = multiprocessing.Lock()
 
-        def rate_limited_task():
-            """Worker function for multi-process testing."""
-            rate_limit = RateLimit(
-                key="test-key", rate="5/sec", wait_period=0.1, max_wait_period=2
+        processes = [
+            multiprocessing.Process(
+                target=_rate_limited_task,
+                args=(shared_counter, shared_counter_lock),
             )
-            if not rate_limit.is_rate_limited():
-                with shared_counter_lock:
-                    shared_counter.value += 1
-
-        processes = [multiprocessing.Process(target=rate_limited_task) for _ in range(10)]
+            for _ in range(10)
+        ]
 
         for p in processes:
             p.start()
