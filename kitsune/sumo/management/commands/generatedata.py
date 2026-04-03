@@ -1,6 +1,6 @@
 # ported from https://github.com/willkg/django-eadred
 
-import imp
+import importlib.util
 from importlib import import_module
 
 from django.conf import settings
@@ -36,13 +36,11 @@ class Command(BaseCommand):
                 continue
 
             try:
-                app_path = import_module(app).__path__
+                import_module(app).__path__
             except AttributeError:
                 continue
 
-            try:
-                imp.find_module("sampledata", app_path)
-            except ImportError:
+            if importlib.util.find_spec(f"{app}.sampledata") is None:
                 continue
 
             module = import_module("{}.sampledata".format(app))

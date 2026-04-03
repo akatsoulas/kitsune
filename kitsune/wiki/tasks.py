@@ -1,6 +1,6 @@
 import logging
 from datetime import date, datetime, timedelta
-from itertools import chain
+from itertools import batched, chain
 
 import waffle
 from celery import shared_task
@@ -26,7 +26,6 @@ from kitsune.products.models import Product
 from kitsune.sumo import email_utils
 from kitsune.sumo.decorators import skip_if_read_only_mode
 from kitsune.sumo.urlresolvers import reverse
-from kitsune.sumo.utils import chunked
 from kitsune.wiki.badges import WIKI_BADGES
 from kitsune.wiki.config import (
     HOW_TO_CATEGORY,
@@ -282,8 +281,8 @@ def rebuild_kb() -> None:
 
     log.info(f"Started rebuild of {d.count()} documents.")
 
-    for chunk in chunked(d, 50):
-        _rebuild_kb_chunk.delay(chunk)
+    for chunk in batched(d, 50, strict=False):
+        _rebuild_kb_chunk.delay(list(chunk))
 
 
 @shared_task(rate_limit="5/m")

@@ -1,3 +1,4 @@
+import itertools
 import logging
 import textwrap
 from datetime import date, datetime, timedelta
@@ -17,7 +18,6 @@ from kitsune.questions.config import ANSWERS_PER_PAGE
 from kitsune.questions.models import QuestionVisits
 from kitsune.search.es_utils import index_objects_bulk
 from kitsune.sumo.decorators import skip_if_read_only_mode
-from kitsune.sumo.utils import chunked
 
 log = logging.getLogger("k.task")
 
@@ -237,8 +237,8 @@ def update_weekly_votes() -> None:
     log.info(f"Started update of {len(qs_to_update)} questions.")
 
     # Chunk them for tasks.
-    for chunk in chunked(qs_to_update, 50):
-        update_question_vote_chunk.delay(chunk)
+    for chunk in itertools.batched(qs_to_update, 50, strict=False):
+        update_question_vote_chunk.delay(list(chunk))
 
 
 @shared_task

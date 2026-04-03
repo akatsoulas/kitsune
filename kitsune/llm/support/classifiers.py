@@ -49,7 +49,7 @@ def _handle_product_reassignment(
     return None
 
 
-def classify_question(question: "Question") -> dict[str, Any]:
+def classify_question(question: Question) -> dict[str, Any]:
     """
     Analyze a question for spam and, if not spam or low confidence, classify the topic.
     Returns a dict with keys: action, spam_result, topic_result (optional).
@@ -107,7 +107,7 @@ def classify_question(question: "Question") -> dict[str, Any]:
     }
 
 
-def classify_zendesk_submission(submission: "SupportTicket") -> dict[str, Any]:
+def classify_zendesk_submission(submission: SupportTicket) -> dict[str, Any]:
     """
     Analyze a support ticket for spam, product classification, and topic classification.
     Returns a dict with keys: action, spam_result, product_result, topic_result.

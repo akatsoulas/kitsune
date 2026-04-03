@@ -1,4 +1,6 @@
 
+from typing import override
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist
@@ -131,6 +133,7 @@ class Thread(NotificationsMixin, ModelBase):
     def __str__(self):
         return self.title
 
+    @override
     def delete(self, *args, **kwargs):
         """Override delete method to update parent forum info."""
         forum = Forum.objects.get(pk=self.forum.id)
@@ -158,6 +161,7 @@ class Thread(NotificationsMixin, ModelBase):
         url = reverse("forums.posts", args=[self.forum.slug, self.id])
         return urlparams(url, hash="post-{}".format(self.last_post_id), **query)
 
+    @override
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         old_forum = getattr(self, "_old_forum", None)
@@ -196,6 +200,7 @@ class Post(ModelBase):
     def __str__(self):
         return self.content[:50]
 
+    @override
     def save(self, *args, **kwargs):
         """
         Override save method to update parent thread info and take care of
@@ -216,6 +221,7 @@ class Post(ModelBase):
             self.thread.forum.last_post = self
             self.thread.forum.save()
 
+    @override
     def delete(self, *args, **kwargs):
         """Override delete method to update parent thread info."""
         thread = Thread.objects.get(pk=self.thread.id)

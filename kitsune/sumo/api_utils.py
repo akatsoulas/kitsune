@@ -1,3 +1,4 @@
+from typing import override
 from zoneinfo import ZoneInfo
 
 from django import forms
@@ -42,6 +43,7 @@ class LocaleNegotiationMixin:
     def get_locale(self):
         return translation.get_language_from_request(self.request)
 
+    @override
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["locale"] = normalize_language(self.get_locale())
@@ -136,9 +138,11 @@ class SplitSourceField(fields.Field):
         # should be fine for our purposes.
         return getattr(instance, self.read_source)
 
+    @override
     def to_representation(self, obj):
         return obj
 
+    @override
     def to_internal_value(self, data):
         return data
 
@@ -168,6 +172,7 @@ class GenericRelatedField(fields.ReadOnlyField):
         self.serializer_type = serializer_type
         super().__init__(**kwargs)
 
+    @override
     def to_representation(self, value):
         content_type = ContentType.objects.get_for_model(value)
         data = {"type": content_type.model}

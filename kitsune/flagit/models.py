@@ -1,4 +1,6 @@
 
+from typing import override
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -66,6 +68,7 @@ class FlaggedObject(ModelBase):
         ordering = ["created"]
         permissions = (("can_moderate", "Can moderate flagged objects"),)
 
+    @override
     def save(self, *args, **kwargs):
         owner = None
         if hasattr(self.content_object, "creator"):

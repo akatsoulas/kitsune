@@ -1,7 +1,7 @@
 # ===================================
 # Stage 1: Common Python dependencies
 # ===================================
-FROM python:3.11-bookworm AS python-base
+FROM python:3.14-bookworm AS python-base
 
 WORKDIR /app
 EXPOSE 8000
@@ -96,7 +96,7 @@ RUN cp .env-build .env && \
 # =====================================
 # Stage 7: Final Clean Production Image
 # =====================================
-FROM python:3.11-slim-bookworm AS prod
+FROM python:3.14-slim-bookworm AS prod
 
 WORKDIR /app
 EXPOSE 8000

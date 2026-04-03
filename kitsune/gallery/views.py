@@ -1,7 +1,7 @@
-import imghdr
 import json
 import logging
 
+import imghdr
 from django.conf import settings
 from django.db.models import Q
 from django.http import (

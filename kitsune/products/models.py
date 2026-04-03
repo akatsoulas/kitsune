@@ -1,3 +1,5 @@
+from typing import override
+
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
@@ -196,6 +198,7 @@ class Topic(BaseProductTopic):
                 named_url = "products.subtopics"
         return reverse(named_url, kwargs=kwargs)
 
+    @override
     def save(self, *args, **kwargs):
         # Check if the is_archived field has changed
         if self._topic_is_archived != self.is_archived:

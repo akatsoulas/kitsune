@@ -1,9 +1,9 @@
 import re
 from typing import Any, TypedDict
 
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import AIMessage
 from langchain_core.exceptions import OutputParserException
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 from kitsune.llm.l10n.config import L10N_PROTECTED_TERMS
 
@@ -173,7 +173,7 @@ def translation_parser(message: AIMessage) -> dict[str, Any]:
     used.
     """
     result = {}
-    content = message.text()
+    content = message.text
 
     mo = TRANSLATION_PARSER_REGEX.match(content)
 
@@ -226,7 +226,7 @@ def anchor_map_parser(message: AIMessage) -> AnchorMapResult:
     and each value is the anchor of its equivalent header in the translation.
     """
     result: AnchorMapResult = {"map": {}, "explanation": ""}
-    content = message.text()
+    content = message.text
 
     exception = OutputParserException(
         "The LLM response was not formatted correctly.",

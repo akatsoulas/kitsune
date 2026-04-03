@@ -1,3 +1,5 @@
+from typing import override
+
 from django.contrib.auth.models import UserManager
 from django.db import models
 
@@ -5,6 +7,7 @@ from django.db import models
 class RegularUserManager(UserManager):
     """Manager that excludes users with system account profiles."""
 
+    @override
     def get_queryset(self):
         from django.contrib.auth.models import User
 
@@ -21,6 +24,7 @@ class RegularUserManager(UserManager):
 class RegularProfileManager(models.Manager):
     """Manager that excludes system account profiles."""
 
+    @override
     def get_queryset(self):
         from kitsune.users.models import Profile
 

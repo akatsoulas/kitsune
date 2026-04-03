@@ -75,24 +75,6 @@ def build_paged_url(request):
     return "{}?{}".format(base, qsa)
 
 
-# By Ned Batchelder.
-def chunked(seq, n, length=None):
-    """
-    Yield successive n-sized chunks from seq.
-
-    If length isn't specifed, it is calculated from len(seq).
-
-    >>> for group in chunked(range(8), 3):
-    ...     print group
-    [0, 1, 2]
-    [3, 4, 5]
-    [6, 7]
-    """
-    if not length:
-        length = len(seq)
-    for i in range(0, length, n):
-        yield seq[i : i + n]
-
 
 def smart_int(string, fallback=0):
     """Convert a string to int, with fallback for invalid strings or types."""

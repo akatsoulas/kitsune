@@ -1,3 +1,5 @@
+from typing import override
+
 from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import generics, serializers
@@ -37,6 +39,7 @@ class ImageList(LocaleNegotiationMixin, generics.ListAPIView):
     filterset_fields = ["height", "width"]
     filter_backends = [InequalityFilterBackend]
 
+    @override
     def get_queryset(self):
         not_is_draft = Q(is_draft=None) | Q(is_draft=False)
         queryset = self.queryset.filter(not_is_draft)

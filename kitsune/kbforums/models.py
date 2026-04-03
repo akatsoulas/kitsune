@@ -1,4 +1,6 @@
 
+from typing import override
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -96,6 +98,7 @@ class Post(ModelBase):
     def __str__(self):
         return self.content[:50]
 
+    @override
     def save(self, *args, **kwargs):
         """
         Override save method to update parent thread info and take care of
@@ -115,6 +118,7 @@ class Post(ModelBase):
             self.thread.last_post = self
             self.thread.save()
 
+    @override
     def delete(self, *args, **kwargs):
         """Override delete method to update parent thread info."""
         thread = Thread.objects.get(pk=self.thread.id)

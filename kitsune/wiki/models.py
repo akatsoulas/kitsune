@@ -1,6 +1,7 @@
 import hashlib
 import logging
 from datetime import timedelta
+from typing import override
 from urllib.parse import urlparse
 
 import waffle
@@ -313,6 +314,7 @@ class Document(NotificationsMixin, ModelBase, DocumentPermissionMixin):
             # Come up with a unique slug (or title):
             return unique_attr()
 
+    @override
     def save(self, *args, **kwargs):
         slug_changed = hasattr(self, "old_slug")
         title_changed = hasattr(self, "old_title")

@@ -1,3 +1,5 @@
+from typing import override
+
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.db import models
@@ -75,6 +77,7 @@ class GroupProfile(TreeModelBase):
     def get_absolute_url(self):
         return reverse("groups.profile", args=[self.slug])
 
+    @override
     def save(self, *args, **kwargs):
         """Set slug on first save, parse information to html, and inherit parent visibility."""
         if not self.slug:

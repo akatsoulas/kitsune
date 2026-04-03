@@ -1,3 +1,5 @@
+from typing import override
+
 import django_filters
 from actstream.models import Action
 from django import forms
@@ -79,6 +81,7 @@ class NotificationViewSet(
     filterset_class = NotificationFilter
     pagination_class = None
 
+    @override
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
         return qs.filter(owner=self.request.user)
@@ -114,6 +117,7 @@ class PushNotificationRegistrationSerializer(serializers.ModelSerializer):
             "push_url",
         )
 
+    @override
     def validate(self, data):
         authed_user = self.context.get("request").user
         creator = data.get("creator")
@@ -159,6 +163,7 @@ class RealtimeRegistrationSerializer(serializers.ModelSerializer):
             "object_id",
         ]
 
+    @override
     def validate(self, data):
         data = super().validate(data)
         authed_user = self.context.get("request").user

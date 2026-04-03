@@ -105,7 +105,7 @@ class AbstractTranslationStrategy(ABC):
 class TranslationStrategy(AbstractTranslationStrategy):
     """Base class for translation strategies."""
 
-    content_manager: "WikiContentManager" = field(init=False)
+    content_manager: WikiContentManager = field(init=False)
 
     def __post_init__(self):
         self.content_manager = WikiContentManager()
@@ -154,7 +154,7 @@ class TranslationStrategy(AbstractTranslationStrategy):
 class ManualTranslationStrategy(TranslationStrategy):
     """Manual translation workflow coordinator."""
 
-    content_manager: "ManualContentManager" = field(init=False)
+    content_manager: ManualContentManager = field(init=False)
 
     def __post_init__(self):
         self.content_manager = ManualContentManager()
@@ -230,7 +230,7 @@ class ManualTranslationStrategy(TranslationStrategy):
 class AITranslationStrategy(TranslationStrategy):
     """AI-based translation strategy without human review."""
 
-    content_manager: "AIContentManager" = field(init=False)
+    content_manager: AIContentManager = field(init=False)
 
     def __post_init__(self):
         self.content_manager = AIContentManager()
@@ -277,7 +277,7 @@ class AITranslationStrategy(TranslationStrategy):
 class HybridTranslationStrategy(TranslationStrategy):
     """Hybrid translation strategy (AI + Human review)."""
 
-    content_manager: "HybridContentManager" = field(init=False)
+    content_manager: HybridContentManager = field(init=False)
 
     def __post_init__(self):
         self.content_manager = HybridContentManager()
