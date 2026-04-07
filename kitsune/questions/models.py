@@ -209,7 +209,8 @@ class Question(AAQBase):
             # Authors should automatically follow their own questions.
             actstream.actions.follow(self.creator, self, send_action=False, actor_only=False)
             # Either automatically classify the question or add it to the moderation queue
-            question_classifier.delay(self.id)
+            if settings.QUESTION_CLASSIFIER_ENABLED:
+                question_classifier.delay(self.id)
 
     def add_metadata(self, **kwargs):
         """Add (save to db) the passed in metadata.

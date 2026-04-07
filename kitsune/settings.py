@@ -626,6 +626,8 @@ ADMIN_REDIRECT_URL = config("ADMIN_REDIRECT_URL", default=None)
 ENABLE_DEV_LOGIN = config("ENABLE_DEV_LOGIN", default=False, cast=bool)
 # Add endpoints for testing purposes
 ENABLE_TESTING_ENDPOINTS = config("ENABLE_TESTING_ENDPOINTS", default=False, cast=bool)
+# Run the question classifier task when a question is created
+QUESTION_CLASSIFIER_ENABLED = config("QUESTION_CLASSIFIER_ENABLED", default=True, cast=bool)
 
 AUTH_PROFILE_MODULE = "users.Profile"
 USER_AVATAR_PATH = "uploads/avatars/"
