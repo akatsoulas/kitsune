@@ -1,19 +1,22 @@
 from django.db import migrations
 
-# Backfill topic FK + product links so the classifier can resolve automation tags
-# for these ZendeskTopics; idempotent so manual fixes and fresh DBs are no-ops.
+# Backfill topic FK + product links + root legacy_tag so the classifier can resolve the
+# automation and legacy tags for these ZendeskTopics; idempotent so manual fixes and fresh
+# DBs are no-ops. legacy_tag is the t1-root bucket (else the classifier falls back to "general").
 CONNECTIONS = [
     {
         "zendesk_slug": "mozilla-account-edit-email",
         "target_tiers": ["t1-accounts", "t2-account-management", "t3-edit-account-details"],
         "automation_tags": ["ssa-edit-account-details", "loggedin-autosolve"],
         "product_slugs": ["mozilla-account"],
+        "legacy_tag": "accounts",
     },
     {
         "zendesk_slug": "fxa-emailverify-lockout",
         "target_tiers": ["t1-passwords-and-sign-in", "t2-sign-in", "t3-email-verify-lockout"],
         "automation_tags": ["ssa-pwrdreset-automation"],
         "product_slugs": ["mozilla-account"],
+        "legacy_tag": "accounts",
     },
     {
         "zendesk_slug": "account-signin",
@@ -27,6 +30,7 @@ CONNECTIONS = [
             "mozilla-vpn",
             "pocket",
         ],
+        "legacy_tag": "accounts",
     },
     {
         "zendesk_slug": "vpn-connection-issues",
@@ -37,6 +41,7 @@ CONNECTIONS = [
         ],
         "automation_tags": ["ssa-connection-issues-automation"],
         "product_slugs": ["mozilla-vpn"],
+        "legacy_tag": "technical",
     },
 ]
 
@@ -83,6 +88,15 @@ def forward(apps, schema_editor):
         topic_for_product = zd_topic.topic if zd_topic.topic_id else target_topic
         if topic_for_product is None:
             continue
+
+        # Seed the t1 root's legacy_tag so the classifier doesn't fall back to "general".
+        root = topic_for_product
+        while root.parent_id is not None:
+            root = root.parent
+        if not root.legacy_tag:
+            root.legacy_tag = conn["legacy_tag"]
+            root.save(update_fields=["legacy_tag"])
+
         for product_slug in conn["product_slugs"]:
             product = Product.objects.filter(slug=product_slug).first()
             if product is not None:
