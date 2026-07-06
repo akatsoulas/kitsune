@@ -920,7 +920,8 @@ body.review {
 }
 
 #approve-modal {
-  .field label {
+  .field label,
+  .message label {
     font-weight: normal;
   }
 
